@@ -1,0 +1,157 @@
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, test, expect, vi } from 'vitest';
+import { ResultList } from './ResultList';
+import type { EntryRow } from '../../shared/types';
+
+describe('ResultList', () => {
+  test('when items is empty, should display empty message', () => {
+    render(
+      <ResultList
+        items={[]}
+        offset={0}
+        totalApprox={0}
+        pageSize={50}
+        onPageChange={() => {}}
+      />,
+    );
+
+    expect(screen.getByText(/no results/i)).toBeInTheDocument();
+  });
+
+  test('when items are provided, should display each entry surface', () => {
+    const items: EntryRow[] = [
+      { id: 1, lang: 'ja', surface: '猫', reading: 'ねこ', pos: '名詞' },
+      { id: 2, lang: 'ja', surface: '犬', reading: 'いぬ', pos: '名詞' },
+    ];
+
+    render(
+      <ResultList
+        items={items}
+        offset={0}
+        totalApprox={2}
+        pageSize={50}
+        onPageChange={() => {}}
+      />,
+    );
+
+    expect(screen.getByText('猫')).toBeInTheDocument();
+    expect(screen.getByText('犬')).toBeInTheDocument();
+  });
+
+  test('when entry has reading, should display reading', () => {
+    const items: EntryRow[] = [
+      { id: 1, lang: 'ja', surface: '猫', reading: 'ねこ', pos: '名詞' },
+    ];
+
+    render(
+      <ResultList
+        items={items}
+        offset={0}
+        totalApprox={1}
+        pageSize={50}
+        onPageChange={() => {}}
+      />,
+    );
+
+    expect(screen.getByText('ねこ')).toBeInTheDocument();
+  });
+
+  test('when entry has pos, should display pos', () => {
+    const items: EntryRow[] = [
+      { id: 1, lang: 'ja', surface: '猫', reading: 'ねこ', pos: '名詞' },
+    ];
+
+    render(
+      <ResultList
+        items={items}
+        offset={0}
+        totalApprox={1}
+        pageSize={50}
+        onPageChange={() => {}}
+      />,
+    );
+
+    expect(screen.getByText('名詞')).toBeInTheDocument();
+  });
+
+  test('when there are more results, should enable next button', () => {
+    const items: EntryRow[] = [
+      { id: 1, lang: 'ja', surface: '猫' },
+    ];
+
+    render(
+      <ResultList
+        items={items}
+        offset={0}
+        totalApprox={100}
+        pageSize={50}
+        onPageChange={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /next/i })).not.toBeDisabled();
+  });
+
+  test('when on first page, should disable prev button', () => {
+    const items: EntryRow[] = [
+      { id: 1, lang: 'ja', surface: '猫' },
+    ];
+
+    render(
+      <ResultList
+        items={items}
+        offset={0}
+        totalApprox={100}
+        pageSize={50}
+        onPageChange={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /prev/i })).toBeDisabled();
+  });
+
+  test('when next button is clicked, should call onPageChange with next offset', async () => {
+    const user = userEvent.setup();
+    const onPageChange = vi.fn();
+    const items: EntryRow[] = [
+      { id: 1, lang: 'ja', surface: '猫' },
+    ];
+
+    render(
+      <ResultList
+        items={items}
+        offset={0}
+        totalApprox={100}
+        pageSize={50}
+        onPageChange={onPageChange}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    expect(onPageChange).toHaveBeenCalledWith(50);
+  });
+
+  test('when prev button is clicked on second page, should call onPageChange with previous offset', async () => {
+    const user = userEvent.setup();
+    const onPageChange = vi.fn();
+    const items: EntryRow[] = [
+      { id: 1, lang: 'ja', surface: '猫' },
+    ];
+
+    render(
+      <ResultList
+        items={items}
+        offset={50}
+        totalApprox={100}
+        pageSize={50}
+        onPageChange={onPageChange}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /prev/i }));
+
+    expect(onPageChange).toHaveBeenCalledWith(0);
+  });
+});

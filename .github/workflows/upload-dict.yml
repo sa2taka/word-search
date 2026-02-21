@@ -1,0 +1,32 @@
+name: Upload Dictionary to R2
+
+on:
+  workflow_dispatch:
+    inputs:
+      dict_dir:
+        description: "Path to built dictionary directory"
+        required: false
+        default: "dist-dict"
+
+permissions:
+  contents: read
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Upload to R2
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: bash scripts/upload-dict.sh ${{ inputs.dict_dir }}

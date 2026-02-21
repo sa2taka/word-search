@@ -59,7 +59,7 @@ const manager = createDbManager({
   fetchMeta,
   downloadDb,
   computeHash: computeSha256,
-  initSqlite,
+  initSqlite: () => initSqlite('/sql-wasm.wasm'),
   openDb,
 });
 

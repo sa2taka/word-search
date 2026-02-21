@@ -1,11 +1,18 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { coopCoep } from './src/vite-plugins/coop-coep'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), coopCoep()],
 
   worker: {
     format: 'es',
+  },
+
+  resolve: {
+    alias: {
+      'sql.js': 'sql.js/dist/sql-wasm.js',
+    },
   },
 
   optimizeDeps: {

@@ -63,6 +63,24 @@ describe('executeSearch', () => {
       db.close();
     });
 
+    test('should match partial text in reading', async () => {
+      const db = await createTestDb(SAMPLE_ENTRIES);
+
+      const result = executeSearch(db, {
+        mode: 'contains',
+        lang: 'ja',
+        query: 'たべ',
+        limit: 50,
+        offset: 0,
+      });
+
+      expect(result.items.map((i) => i.surface)).toEqual(
+        expect.arrayContaining(['食べる', '食べ物']),
+      );
+      expect(result.items).toHaveLength(2);
+      db.close();
+    });
+
     test('should escape LIKE special characters', async () => {
       const entries: TestEntry[] = [
         { lang: 'en', surface: '100%' },
@@ -103,6 +121,24 @@ describe('executeSearch', () => {
       expect(result.items).toHaveLength(2);
       db.close();
     });
+
+    test('should match beginning of reading', async () => {
+      const db = await createTestDb(SAMPLE_ENTRIES);
+
+      const result = executeSearch(db, {
+        mode: 'prefix',
+        lang: 'ja',
+        query: 'たべ',
+        limit: 50,
+        offset: 0,
+      });
+
+      expect(result.items.map((i) => i.surface)).toEqual(
+        expect.arrayContaining(['食べる', '食べ物']),
+      );
+      expect(result.items).toHaveLength(2);
+      db.close();
+    });
   });
 
   describe('regex mode', () => {
@@ -121,6 +157,22 @@ describe('executeSearch', () => {
         expect.arrayContaining(['eat', 'eating']),
       );
       expect(result.items).toHaveLength(2);
+      db.close();
+    });
+
+    test('should match by regex pattern in reading', async () => {
+      const db = await createTestDb(SAMPLE_ENTRIES);
+
+      const result = executeSearch(db, {
+        mode: 'regex',
+        lang: 'ja',
+        query: '^はし',
+        limit: 50,
+        offset: 0,
+      });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0]?.surface).toBe('走る');
       db.close();
     });
 
@@ -144,6 +196,24 @@ describe('executeSearch', () => {
       expect((error as WorkerError).code).toBe('REGEX_INVALID');
       db.close();
     });
+  });
+
+  test('when query matches both surface and reading, should not duplicate', async () => {
+    const entries: TestEntry[] = [
+      { lang: 'ja', surface: 'たべる', reading: 'たべる', pos: '動詞' },
+    ];
+    const db = await createTestDb(entries);
+
+    const result = executeSearch(db, {
+      mode: 'contains',
+      lang: 'ja',
+      query: 'たべる',
+      limit: 50,
+      offset: 0,
+    });
+
+    expect(result.items).toHaveLength(1);
+    db.close();
   });
 
   test('should filter by lang', async () => {

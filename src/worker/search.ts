@@ -11,10 +11,10 @@ function escapeLike(query: string): string {
 function buildWhereSql(mode: SearchMode): string {
   switch (mode) {
     case 'regex':
-      return 'lang = ? AND regexp(?, surface)';
+      return 'lang = ? AND (regexp(?, surface) OR regexp(?, reading))';
     case 'contains':
     case 'prefix':
-      return "lang = ? AND surface LIKE ? ESCAPE '\\'";
+      return "lang = ? AND (surface LIKE ? ESCAPE '\\' OR reading LIKE ? ESCAPE '\\')";
   }
 }
 
@@ -72,15 +72,17 @@ export function executeSearch(
     const where = buildWhereSql(params.mode);
     const pattern = buildPattern(params.mode, params.query);
 
-    const sql = `SELECT id, lang, surface, reading, pos FROM entries WHERE ${where} ORDER BY surface LIMIT ? OFFSET ?`;
+    const limit = Math.trunc(params.limit);
+    const offset = Math.trunc(params.offset);
+    const sql = `SELECT id, lang, surface, reading, pos FROM entries WHERE ${where} ORDER BY surface LIMIT ${limit} OFFSET ${offset}`;
     const items = parseRows(
-      db.exec(sql, [params.lang, pattern, params.limit, params.offset]),
+      db.exec(sql, [params.lang, pattern, pattern]),
     );
 
     let totalApprox: number | undefined;
     if (params.offset === 0) {
       const countSql = `SELECT COUNT(*) FROM entries WHERE ${where}`;
-      const countResult = db.exec(countSql, [params.lang, pattern]);
+      const countResult = db.exec(countSql, [params.lang, pattern, pattern]);
       totalApprox = countResult[0]?.values[0]?.[0] as number | undefined;
     }
 

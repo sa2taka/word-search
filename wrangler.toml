@@ -1,0 +1,10 @@
+name = "word-search"
+main = "worker/index.ts"
+compatibility_date = "2026-03-31"
+
+[assets]
+directory = "./dist"
+
+[[r2_buckets]]
+binding = "DICT_BUCKET"
+bucket_name = "word-search-dict"

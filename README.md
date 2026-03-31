@@ -9,15 +9,16 @@ OPFS + SQLite WASM を使ったオフライン対応の辞書検索 SPA。
 - **ストレージ**: Origin Private File System (OPFS)
 - **ビルド**: Vite 8, TypeScript 6
 - **テスト**: Vitest + Testing Library (unit), Playwright (E2E, Chromium only)
-- **デプロイ**: Cloudflare Pages (GitHub連携) + R2
+- **デプロイ**: Cloudflare Workers (Static Assets + R2)
 
 ## アーキテクチャ
 
 ```
+worker/              Cloudflare Worker（R2 プロキシ + 静的アセット配信）
 src/
 ├── shared/          型・定数（UI/Worker共有）
 ├── ui/              React コンポーネント + hooks
-├── worker/          Web Worker（SQLite操作・OPFS管理）
+├── worker/          Web Worker（SQLite操作・OPFS管理）← ブラウザ側、CF Worker とは別物
 └── vite-plugins/    Viteプラグイン（COOP/COEPヘッダー）
 ```
 
@@ -51,38 +52,29 @@ npx playwright install chromium  # E2Eテスト用
 | `npm run e2e` | E2E テスト実行 |
 | `npm run e2e:headed` | E2E テスト（ブラウザ表示） |
 | `npm run lint` | ESLint 実行 |
+| `npm run deploy` | Cloudflare Workers にデプロイ |
+| `npm run build:dict` | 辞書 DB ビルド |
 
 ## デプロイ
 
-SPA 本体は **Cloudflare Pages**、辞書データは **Cloudflare R2** にホストする。
+**Cloudflare Workers** (Static Assets) で SPA を配信し、**R2** の辞書データを同一オリジンでプロキシする。
 
 ### 前提
 
 1. [Cloudflare Dashboard](https://dash.cloudflare.com/) でアカウント作成
-2. R2 バケットを作成（例: `word-search-dict`）
-3. R2 バケットにカスタムドメインまたはパブリックアクセスを設定
-4. wrangler CLI でログイン:
+2. R2 バケットを作成（`wrangler.toml` の `bucket_name` と一致させる）
+3. wrangler CLI でログイン:
 
 ```bash
 npx wrangler login
 ```
 
-### Pages (SPA)
+### SPA デプロイ
 
 ```bash
-# ビルド → デプロイ
 npm run build
-npx wrangler pages deploy dist --project-name word-search
+npm run deploy          # = wrangler deploy
 ```
-
-または Cloudflare Dashboard で GitHub 連携すれば main push で自動デプロイ:
-
-| 設定 | 値 |
-|---|---|
-| Framework preset | None |
-| Build command | `npm run build` |
-| Build output directory | `dist` |
-| Node.js version | 22（環境変数 `NODE_VERSION=22`） |
 
 ### R2 (辞書データ)
 
@@ -94,26 +86,34 @@ npm run build:dict
 R2_BUCKET_NAME=<bucket> bash scripts/upload-dict.sh dist-dict
 ```
 
-GitHub Actions 経由でも可能（手動トリガー）:
+GitHub Actions の "Upload Dictionary to R2" ワークフローでも実行可能（手動トリガー、要 `R2_BUCKET_NAME` Secret）。
 
-```bash
-# リポジトリの Settings → Secrets に以下を設定:
-#   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, R2_BUCKET_NAME
-# Actions → "Upload Dictionary to R2" → Run workflow
+### 辞書データの配信経路
+
+```
+Browser (Web Worker)
+  → GET /dict.meta.json  → Cloudflare Worker → R2 (meta.json)   → Response + COOP/COEP
+  → GET /dict.sqlite     → Cloudflare Worker → R2 (dict.db)     → Response + COOP/COEP
+  → GET /assets/...      → Static Assets (dist/)                 → Response + _headers
 ```
 
-### META_URL の設定
+1. SPA 起動時に Web Worker が `/dict.meta.json` を fetch
+2. `meta.json` 内の `"url": "/dict.sqlite"` から辞書 DB を fetch
+3. SHA-256 検証 → OPFS にキャッシュ（2回目以降はローカルから直接読み込み）
 
-`src/shared/constants.ts` の `META_URL` が辞書メタデータの取得先。
-開発時はローカルの `dist-dict/` から自動配信される（`localDict` Vite プラグイン）。
-本番では R2 のパブリック URL を指定する。
+Cloudflare Worker がエッジキャッシュ + COOP/COEP ヘッダーを付与するため、R2 の CORS 設定やカスタムドメインは不要。
+
+#### 開発時
+
+`localDict` Vite プラグインが `dist-dict/` 内のファイルを同じパスで配信するため、開発と本番でコードの違いはない。
 
 ## COOP/COEP
 
 OPFS と SharedArrayBuffer の利用に cross-origin isolation が必要。
 
 - **開発/プレビュー**: `src/vite-plugins/coop-coep.ts` がヘッダーを付与
-- **本番**: `public/_headers` (Cloudflare Pages) で設定
+- **本番 (静的アセット)**: `public/_headers` (Workers Static Assets が適用)
+- **本番 (R2 プロキシ)**: `worker/index.ts` が COOP/COEP ヘッダーを付与
 
 ## sql.js の注意点
 

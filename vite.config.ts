@@ -4,7 +4,7 @@ import { coopCoep } from './src/vite-plugins/coop-coep'
 import { localDict } from './src/vite-plugins/local-dict'
 
 export default defineConfig({
-  base: './',
+  base: '/',
   plugins: [react(), coopCoep(), localDict()],
 
   worker: {

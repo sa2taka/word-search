@@ -32,3 +32,6 @@ tmp/
 
 # Dictionary build output
 dist-dict/
+
+# Wrangler
+.wrangler/

@@ -20,10 +20,11 @@ npm run lint         # ESLint
 ## ディレクトリ構造
 
 ```
+worker/           Cloudflare Worker（R2プロキシ + 静的アセット配信）※ src/worker/ とは別物
 __tests__/        ユニットテスト（src/ のディレクトリ構造をミラー）
 src/shared/       型・定数（UI/Worker共有、他に依存しない）
 src/ui/           Reactコンポーネント + hooks + CSS
-src/worker/       Web Worker層（SQLite操作、OPFS、検索実行）
+src/worker/       Web Worker層（SQLite操作、OPFS、検索実行）← ブラウザ側
 src/vite-plugins/ Viteプラグイン（COOP/COEPヘッダー）
 e2e/              Playwright E2Eテスト
   fixtures/       テストDBデータ生成
@@ -47,9 +48,9 @@ public/           静的ファイル（sql-wasm.wasm, _headers）
 
 ### 検索
 
-`surface` と `reading` の両方を OR 条件で検索。バインドパラメータは `[lang, pattern, pattern]` の 3 つ。
+正規化済み `word` カラムを検索。バインドパラメータは `[lang, pattern]` の 2 つ。
 
-モード: `contains` (部分一致), `prefix` (前方一致), `regex` (正規表現 UDF, 2秒タイムアウト)
+モード: `wildcard` (デフォルト, ? → LIKE _), `contains` (部分一致), `prefix` (前方一致), `regex` (正規表現 UDF, 2秒タイムアウト)
 
 ## 重要な技術的制約
 
@@ -61,7 +62,7 @@ public/           静的ファイル（sql-wasm.wasm, _headers）
 
 ### COOP/COEP
 
-OPFS に必要。dev/preview は Vite プラグイン、本番は `public/_headers` で設定。
+OPFS に必要。dev/preview は Vite プラグイン、本番の静的アセットは `public/_headers`、R2 プロキシは `worker/index.ts` が付与。
 
 ### E2E テスト
 

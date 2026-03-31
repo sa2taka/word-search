@@ -10,14 +10,14 @@ test.describe('Offline functionality', () => {
     await page.goto('/');
     await waitForReady(page);
 
-    await page.locator('[aria-label="Search"]').fill('猫');
-    await expect(page.locator('.result-list__surface').first()).toBeVisible();
+    await page.locator('[aria-label="Search"]').fill('ねこ');
+    await expect(page.locator('.result-list__word').first()).toBeVisible();
 
     await context.setOffline(true);
 
-    await page.locator('[aria-label="Search"]').fill('犬');
-    await expect(page.locator('.result-list__surface').first()).toBeVisible();
-    await expect(page.locator('.result-list__surface').first()).toHaveText('犬');
+    await page.locator('[aria-label="Search"]').fill('いぬ');
+    await expect(page.locator('.result-list__word').first()).toBeVisible();
+    await expect(page.locator('.result-list__word').first()).toHaveText('いぬ');
   });
 
   test('when meta fetch fails on reload, should use local DB for search', async ({ page }) => {
@@ -34,8 +34,8 @@ test.describe('Offline functionality', () => {
     await page.reload();
     await waitForReady(page);
 
-    await page.locator('[aria-label="Search"]').fill('東京');
-    await expect(page.locator('.result-list__surface').first()).toBeVisible();
-    await expect(page.locator('.result-list__surface').first()).toHaveText('東京');
+    await page.locator('[aria-label="Search"]').fill('とうきよう');
+    await expect(page.locator('.result-list__word').first()).toBeVisible();
+    await expect(page.locator('.result-list__word').first()).toHaveText('とうきよう');
   });
 });

@@ -29,3 +29,6 @@ test-results/
 
 # tmp
 tmp/
+
+# Dictionary build output
+dist-dict/

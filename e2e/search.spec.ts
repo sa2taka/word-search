@@ -11,19 +11,19 @@ test.describe('Search functionality', () => {
   test('when searching in contains mode with Japanese, should show matching results', async ({
     page,
   }) => {
-    await page.locator('[aria-label="Search"]').fill('猫');
-
-    const results = page.locator('.result-list__surface');
-    await expect(results.first()).toBeVisible();
-    await expect(results.first()).toHaveText('猫');
-  });
-
-  test('when searching by reading in hiragana, should show matching results', async ({ page }) => {
     await page.locator('[aria-label="Search"]').fill('ねこ');
 
-    const results = page.locator('.result-list__surface');
+    const results = page.locator('.result-list__word');
     await expect(results.first()).toBeVisible();
-    await expect(results.first()).toHaveText('猫');
+    await expect(results.first()).toHaveText('ねこ');
+  });
+
+  test('when searching with katakana, should match hiragana entries', async ({ page }) => {
+    await page.locator('[aria-label="Search"]').fill('ネコ');
+
+    const results = page.locator('.result-list__word');
+    await expect(results.first()).toBeVisible();
+    await expect(results.first()).toHaveText('ねこ');
   });
 
   test('when searching in prefix mode, should return only prefix matches', async ({ page }) => {
@@ -31,7 +31,7 @@ test.describe('Search functionality', () => {
     await page.locator('#search-lang').selectOption('en');
     await page.locator('[aria-label="Search"]').fill('app');
 
-    const results = page.locator('.result-list__surface');
+    const results = page.locator('.result-list__word');
     await expect(results).toHaveCount(2);
 
     const texts = await results.allTextContents();
@@ -45,7 +45,7 @@ test.describe('Search functionality', () => {
     await page.locator('#search-lang').selectOption('en');
     await page.locator('[aria-label="Search"]').fill('test\\d+');
 
-    const results = page.locator('.result-list__surface');
+    const results = page.locator('.result-list__word');
     await expect(results).toHaveCount(2);
 
     const texts = await results.allTextContents();
@@ -62,8 +62,8 @@ test.describe('Search functionality', () => {
 
     await page.locator('#search-lang').selectOption('en');
 
-    await expect(page.locator('.result-list__surface').first()).toBeVisible();
-    const enTexts = await page.locator('.result-list__surface').allTextContents();
+    await expect(page.locator('.result-list__word').first()).toBeVisible();
+    const enTexts = await page.locator('.result-list__word').allTextContents();
     expect(enTexts).toContain('cat');
   });
 

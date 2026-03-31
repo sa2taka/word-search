@@ -8,6 +8,7 @@ import type {
   WorkerRequest,
   WorkerResponse,
 } from '../../shared/types';
+import SearchWorker from '../../worker/search-worker?worker';
 
 interface SearchParams {
   mode: SearchMode;
@@ -29,7 +30,7 @@ interface UseSearchWorkerReturn {
   items: EntryRow[];
   totalApprox: number;
   error: WorkerError | null;
-  init: (metaUrl: string) => void;
+  retry: () => void;
   search: (params: SearchParams) => void;
   cancel: () => void;
   checkUpdate: (metaUrl: string) => void;
@@ -37,9 +38,10 @@ interface UseSearchWorkerReturn {
   resetDb: () => void;
 }
 
-export function useSearchWorker(): UseSearchWorkerReturn {
+export function useSearchWorker(metaUrl: string): UseSearchWorkerReturn {
   const workerRef = useRef<Worker | null>(null);
   const requestIdRef = useRef<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   const [dbStatus, setDbStatus] = useState<DbStatus>('idle');
   const [version, setVersion] = useState<string | undefined>();
@@ -49,13 +51,32 @@ export function useSearchWorker(): UseSearchWorkerReturn {
   const [error, setError] = useState<WorkerError | null>(null);
 
   useEffect(() => {
-    const worker = new Worker(
-      new URL('../../worker/search-worker.ts', import.meta.url),
-      { type: 'module' },
-    );
+    let disposed = false;
+    let gotMessage = false;
+
+    const worker = new SearchWorker();
     workerRef.current = worker;
 
+    const timeout = setTimeout(() => {
+      if (!disposed && !gotMessage) {
+        setError({ code: 'DB_OPEN_FAILED', message: 'Worker did not respond within 10s' });
+        setDbStatus('error');
+      }
+    }, 10_000);
+
+    worker.onerror = (e) => {
+      if (disposed) return;
+      const detail = e instanceof ErrorEvent
+        ? `${e.message} (${e.filename}:${e.lineno})`
+        : 'Worker failed to start';
+      setError({ code: 'DB_OPEN_FAILED', message: detail });
+      setDbStatus('error');
+    };
+
     worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
+      if (disposed) return;
+      gotMessage = true;
+      clearTimeout(timeout);
       const data = e.data;
       switch (data.type) {
         case 'STATUS':
@@ -79,19 +100,20 @@ export function useSearchWorker(): UseSearchWorkerReturn {
       }
     };
 
+    // Worker 作成と INIT 送信を同一 useEffect 内で行う
+    // StrictMode で cleanup → 再実行されても、新しい Worker に確実に INIT が届く
+    worker.postMessage({ type: 'INIT', metaUrl } satisfies WorkerRequest);
+
     return () => {
+      disposed = true;
+      clearTimeout(timeout);
       worker.terminate();
     };
-  }, []);
+  }, [metaUrl, retryKey]);
 
   const post = useCallback((msg: WorkerRequest) => {
     workerRef.current?.postMessage(msg);
   }, []);
-
-  const init = useCallback(
-    (metaUrl: string) => post({ type: 'INIT', metaUrl }),
-    [post],
-  );
 
   const search = useCallback(
     (params: SearchParams) => {
@@ -121,6 +143,12 @@ export function useSearchWorker(): UseSearchWorkerReturn {
 
   const resetDb = useCallback(() => post({ type: 'RESET_DB' }), [post]);
 
+  const retry = useCallback(() => {
+    setDbStatus('idle');
+    setError(null);
+    setRetryKey((k) => k + 1);
+  }, []);
+
   return {
     dbStatus,
     version,
@@ -128,7 +156,7 @@ export function useSearchWorker(): UseSearchWorkerReturn {
     items,
     totalApprox,
     error,
-    init,
+    retry,
     search,
     cancel,
     checkUpdate,

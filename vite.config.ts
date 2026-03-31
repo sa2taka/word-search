@@ -1,9 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { coopCoep } from './src/vite-plugins/coop-coep'
+import { localDict } from './src/vite-plugins/local-dict'
 
 export default defineConfig({
-  plugins: [react(), coopCoep()],
+  base: './',
+  plugins: [react(), coopCoep(), localDict()],
 
   worker: {
     format: 'es',
@@ -15,16 +17,12 @@ export default defineConfig({
     },
   },
 
-  optimizeDeps: {
-    exclude: ['sql.js'],
-  },
-
   build: {
     target: 'es2022',
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ['react', 'react-dom'],
+        manualChunks(id) {
+          if (id.includes('node_modules/react')) return 'react';
         },
       },
     },

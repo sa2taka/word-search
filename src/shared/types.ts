@@ -24,9 +24,9 @@ export interface DictSource {
 export interface EntryRow {
   id: number;
   lang: Lang;
-  surface: string;
-  reading?: string;
+  word: string;
   pos?: string;
+  sources: string[];
 }
 
 export type WorkerRequest =

@@ -7,9 +7,9 @@ import { WorkerError } from '../../src/worker/worker-error';
 
 interface TestEntry {
   lang: Lang;
-  surface: string;
-  reading?: string;
+  word: string;
   pos?: string;
+  sources?: string[];
 }
 
 async function createTestDb(entries: TestEntry[]): Promise<Database> {
@@ -19,51 +19,33 @@ async function createTestDb(entries: TestEntry[]): Promise<Database> {
     CREATE TABLE entries (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       lang TEXT NOT NULL,
-      surface TEXT NOT NULL,
-      reading TEXT,
-      pos TEXT
+      word TEXT NOT NULL,
+      pos TEXT,
+      sources TEXT NOT NULL
     )
   `);
   const stmt = db.prepare(
-    'INSERT INTO entries (lang, surface, reading, pos) VALUES (?, ?, ?, ?)',
+    'INSERT INTO entries (lang, word, pos, sources) VALUES (?, ?, ?, ?)',
   );
   for (const e of entries) {
-    stmt.run([e.lang, e.surface, e.reading ?? null, e.pos ?? null]);
+    stmt.run([e.lang, e.word, e.pos ?? null, JSON.stringify(e.sources ?? ['test'])]);
   }
   stmt.free();
   return db;
 }
 
 const SAMPLE_ENTRIES: TestEntry[] = [
-  { lang: 'ja', surface: '食べる', reading: 'たべる', pos: '動詞' },
-  { lang: 'ja', surface: '食べ物', reading: 'たべもの', pos: '名詞' },
-  { lang: 'ja', surface: '走る', reading: 'はしる', pos: '動詞' },
-  { lang: 'en', surface: 'eat', pos: 'verb' },
-  { lang: 'en', surface: 'eating', pos: 'verb' },
-  { lang: 'en', surface: 'run', pos: 'verb' },
+  { lang: 'ja', word: 'たべる', pos: '動詞' },
+  { lang: 'ja', word: 'たべもの', pos: '名詞' },
+  { lang: 'ja', word: 'はしる', pos: '動詞' },
+  { lang: 'en', word: 'eat', pos: 'verb' },
+  { lang: 'en', word: 'eating', pos: 'verb' },
+  { lang: 'en', word: 'run', pos: 'verb' },
 ];
 
 describe('executeSearch', () => {
   describe('contains mode', () => {
-    test('should match partial text in surface', async () => {
-      const db = await createTestDb(SAMPLE_ENTRIES);
-
-      const result = executeSearch(db, {
-        mode: 'contains',
-        lang: 'ja',
-        query: '食べ',
-        limit: 50,
-        offset: 0,
-      });
-
-      expect(result.items.map((i) => i.surface)).toEqual(
-        expect.arrayContaining(['食べる', '食べ物']),
-      );
-      expect(result.items).toHaveLength(2);
-      db.close();
-    });
-
-    test('should match partial text in reading', async () => {
+    test('should match partial text in word', async () => {
       const db = await createTestDb(SAMPLE_ENTRIES);
 
       const result = executeSearch(db, {
@@ -74,8 +56,26 @@ describe('executeSearch', () => {
         offset: 0,
       });
 
-      expect(result.items.map((i) => i.surface)).toEqual(
-        expect.arrayContaining(['食べる', '食べ物']),
+      expect(result.items.map((i) => i.word)).toEqual(
+        expect.arrayContaining(['たべる', 'たべもの']),
+      );
+      expect(result.items).toHaveLength(2);
+      db.close();
+    });
+
+    test('should normalize query before searching', async () => {
+      const db = await createTestDb(SAMPLE_ENTRIES);
+
+      const result = executeSearch(db, {
+        mode: 'contains',
+        lang: 'ja',
+        query: 'タベ',
+        limit: 50,
+        offset: 0,
+      });
+
+      expect(result.items.map((i) => i.word)).toEqual(
+        expect.arrayContaining(['たべる', 'たべもの']),
       );
       expect(result.items).toHaveLength(2);
       db.close();
@@ -83,9 +83,9 @@ describe('executeSearch', () => {
 
     test('should escape LIKE special characters', async () => {
       const entries: TestEntry[] = [
-        { lang: 'en', surface: '100%' },
-        { lang: 'en', surface: '100' },
-        { lang: 'en', surface: 'abc' },
+        { lang: 'en', word: '100%' },
+        { lang: 'en', word: '100' },
+        { lang: 'en', word: 'abc' },
       ];
       const db = await createTestDb(entries);
 
@@ -98,13 +98,13 @@ describe('executeSearch', () => {
       });
 
       expect(result.items).toHaveLength(1);
-      expect(result.items[0]?.surface).toBe('100%');
+      expect(result.items[0]?.word).toBe('100%');
       db.close();
     });
   });
 
   describe('prefix mode', () => {
-    test('should match beginning of surface', async () => {
+    test('should match beginning of word', async () => {
       const db = await createTestDb(SAMPLE_ENTRIES);
 
       const result = executeSearch(db, {
@@ -115,14 +115,14 @@ describe('executeSearch', () => {
         offset: 0,
       });
 
-      expect(result.items.map((i) => i.surface)).toEqual(
+      expect(result.items.map((i) => i.word)).toEqual(
         expect.arrayContaining(['eat', 'eating']),
       );
       expect(result.items).toHaveLength(2);
       db.close();
     });
 
-    test('should match beginning of reading', async () => {
+    test('should match beginning of hiragana word', async () => {
       const db = await createTestDb(SAMPLE_ENTRIES);
 
       const result = executeSearch(db, {
@@ -133,8 +133,8 @@ describe('executeSearch', () => {
         offset: 0,
       });
 
-      expect(result.items.map((i) => i.surface)).toEqual(
-        expect.arrayContaining(['食べる', '食べ物']),
+      expect(result.items.map((i) => i.word)).toEqual(
+        expect.arrayContaining(['たべる', 'たべもの']),
       );
       expect(result.items).toHaveLength(2);
       db.close();
@@ -153,14 +153,14 @@ describe('executeSearch', () => {
         offset: 0,
       });
 
-      expect(result.items.map((i) => i.surface)).toEqual(
+      expect(result.items.map((i) => i.word)).toEqual(
         expect.arrayContaining(['eat', 'eating']),
       );
       expect(result.items).toHaveLength(2);
       db.close();
     });
 
-    test('should match by regex pattern in reading', async () => {
+    test('should match by regex pattern in word', async () => {
       const db = await createTestDb(SAMPLE_ENTRIES);
 
       const result = executeSearch(db, {
@@ -172,7 +172,7 @@ describe('executeSearch', () => {
       });
 
       expect(result.items).toHaveLength(1);
-      expect(result.items[0]?.surface).toBe('走る');
+      expect(result.items[0]?.word).toBe('はしる');
       db.close();
     });
 
@@ -196,24 +196,6 @@ describe('executeSearch', () => {
       expect((error as WorkerError).code).toBe('REGEX_INVALID');
       db.close();
     });
-  });
-
-  test('when query matches both surface and reading, should not duplicate', async () => {
-    const entries: TestEntry[] = [
-      { lang: 'ja', surface: 'たべる', reading: 'たべる', pos: '動詞' },
-    ];
-    const db = await createTestDb(entries);
-
-    const result = executeSearch(db, {
-      mode: 'contains',
-      lang: 'ja',
-      query: 'たべる',
-      limit: 50,
-      offset: 0,
-    });
-
-    expect(result.items).toHaveLength(1);
-    db.close();
   });
 
   test('should filter by lang', async () => {
@@ -266,7 +248,7 @@ describe('executeSearch', () => {
 
     expect(page1.items).toHaveLength(1);
     expect(page2.items).toHaveLength(1);
-    expect(page1.items[0]?.surface).not.toBe(page2.items[0]?.surface);
+    expect(page1.items[0]?.word).not.toBe(page2.items[0]?.word);
     db.close();
   });
 
@@ -306,7 +288,7 @@ describe('executeSearch', () => {
     const result = executeSearch(db, {
       mode: 'contains',
       lang: 'ja',
-      query: '食べる',
+      query: 'たべる',
       limit: 50,
       offset: 0,
     });
@@ -314,9 +296,9 @@ describe('executeSearch', () => {
     expect(result.items[0]).toEqual({
       id: expect.any(Number),
       lang: 'ja',
-      surface: '食べる',
-      reading: 'たべる',
+      word: 'たべる',
       pos: '動詞',
+      sources: ['test'],
     });
     db.close();
   });

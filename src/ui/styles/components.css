@@ -146,15 +146,10 @@
   border-bottom: none;
 }
 
-.result-list__surface {
+.result-list__word {
   font-size: var(--text-lg);
   font-weight: var(--weight-medium);
   color: var(--color-text);
-}
-
-.result-list__reading {
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
 }
 
 .result-list__pos {

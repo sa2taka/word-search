@@ -21,8 +21,8 @@ describe('ResultList', () => {
 
   test('when items are provided, should display each entry surface', () => {
     const items: EntryRow[] = [
-      { id: 1, lang: 'ja', surface: '猫', reading: 'ねこ', pos: '名詞' },
-      { id: 2, lang: 'ja', surface: '犬', reading: 'いぬ', pos: '名詞' },
+      { id: 1, lang: 'ja', word: 'ねこ', pos: '名詞', sources: ['jmdict'] },
+      { id: 2, lang: 'ja', word: 'いぬ', pos: '名詞', sources: ['jmdict'] },
     ];
 
     render(
@@ -35,31 +35,13 @@ describe('ResultList', () => {
       />,
     );
 
-    expect(screen.getByText('猫')).toBeInTheDocument();
-    expect(screen.getByText('犬')).toBeInTheDocument();
-  });
-
-  test('when entry has reading, should display reading', () => {
-    const items: EntryRow[] = [
-      { id: 1, lang: 'ja', surface: '猫', reading: 'ねこ', pos: '名詞' },
-    ];
-
-    render(
-      <ResultList
-        items={items}
-        offset={0}
-        totalApprox={1}
-        pageSize={50}
-        onPageChange={() => {}}
-      />,
-    );
-
     expect(screen.getByText('ねこ')).toBeInTheDocument();
+    expect(screen.getByText('いぬ')).toBeInTheDocument();
   });
 
   test('when entry has pos, should display pos', () => {
     const items: EntryRow[] = [
-      { id: 1, lang: 'ja', surface: '猫', reading: 'ねこ', pos: '名詞' },
+      { id: 1, lang: 'ja', word: 'ねこ', pos: '名詞', sources: ['jmdict'] },
     ];
 
     render(
@@ -77,7 +59,7 @@ describe('ResultList', () => {
 
   test('when there are more results, should enable next button', () => {
     const items: EntryRow[] = [
-      { id: 1, lang: 'ja', surface: '猫' },
+      { id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'] },
     ];
 
     render(
@@ -95,7 +77,7 @@ describe('ResultList', () => {
 
   test('when on first page, should disable prev button', () => {
     const items: EntryRow[] = [
-      { id: 1, lang: 'ja', surface: '猫' },
+      { id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'] },
     ];
 
     render(
@@ -115,7 +97,7 @@ describe('ResultList', () => {
     const user = userEvent.setup();
     const onPageChange = vi.fn();
     const items: EntryRow[] = [
-      { id: 1, lang: 'ja', surface: '猫' },
+      { id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'] },
     ];
 
     render(
@@ -137,7 +119,7 @@ describe('ResultList', () => {
     const user = userEvent.setup();
     const onPageChange = vi.fn();
     const items: EntryRow[] = [
-      { id: 1, lang: 'ja', surface: '猫' },
+      { id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'] },
     ];
 
     render(

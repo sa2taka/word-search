@@ -12,27 +12,32 @@ import type { SearchMode, Lang } from '../shared/types';
 
 type Page = 'search' | 'license';
 
-const STATUS_MESSAGES: Record<string, string> = {
-  idle: 'Dictionary not downloaded. Initializing...',
-  downloading: 'Downloading dictionary...',
-  ready: 'Ready',
-  updatable: 'Update available',
-  error: 'An error occurred',
-};
+function statusMessage(status: string, progress?: number, errorMessage?: string): string {
+  switch (status) {
+    case 'idle':
+      return 'Initializing...';
+    case 'downloading':
+      return progress != null ? `Downloading dictionary... ${progress}%` : 'Downloading dictionary...';
+    case 'ready':
+      return 'Ready';
+    case 'updatable':
+      return 'Update available';
+    case 'error':
+      return errorMessage ? `Error: ${errorMessage}` : 'An error occurred';
+    default:
+      return '';
+  }
+}
 
 export function App() {
-  const worker = useSearchWorker();
+  const worker = useSearchWorker(META_URL);
   const [page, setPage] = useState<Page>('search');
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<SearchMode>('contains');
   const [lang, setLang] = useState<Lang>('ja');
   const [offset, setOffset] = useState(0);
 
-  const { init, search, resetDb, dbStatus, version, progress, items, totalApprox, error } = worker;
-
-  useEffect(() => {
-    init(META_URL);
-  }, [init]);
+  const { search, resetDb, retry, dbStatus, version, progress, items, totalApprox, error } = worker;
 
   useEffect(() => {
     if (dbStatus !== 'ready' || query.trim() === '') return;
@@ -53,10 +58,6 @@ export function App() {
     setLang(value);
     setOffset(0);
   }, []);
-
-  const handleRetry = useCallback(() => {
-    init(META_URL);
-  }, [init]);
 
   const handleReset = useCallback(() => {
     resetDb();
@@ -89,14 +90,14 @@ export function App() {
       {showError && error && (
         <ErrorRecovery
           message={error.message}
-          onRetry={handleRetry}
+          onRetry={retry}
           onReset={handleReset}
         />
       )}
       {showStatus && !showError && (
         <StatusDisplay
           status={dbStatus}
-          message={STATUS_MESSAGES[dbStatus] ?? ''}
+          message={statusMessage(dbStatus, progress, error?.message)}
           progress={progress}
         />
       )}

@@ -5,6 +5,7 @@ import type { WorkerResponse } from '../../../src/shared/types';
 
 class MockWorker {
   onmessage: ((e: MessageEvent) => void) | null = null;
+  onerror: ((e: Event) => void) | null = null;
   postMessage = vi.fn();
   terminate = vi.fn();
 
@@ -20,40 +21,29 @@ describe('useSearchWorker', () => {
     mockWorker = new MockWorker();
     vi.stubGlobal('Worker', class {
       onmessage: ((e: MessageEvent) => void) | null = null;
+      onerror: ((e: Event) => void) | null = null;
       postMessage = mockWorker.postMessage;
       terminate = mockWorker.terminate;
       constructor() {
         setTimeout(() => {
-          this.onmessage && (mockWorker.onmessage = this.onmessage);
+          if (this.onmessage) mockWorker.onmessage = this.onmessage;
+          if (this.onerror) mockWorker.onerror = this.onerror;
         }, 0);
       }
     });
   });
-  test('when initialized, should have idle status', () => {
-    const { result } = renderHook(() => useSearchWorker());
 
-    expect(result.current.dbStatus).toBe('idle');
-  });
-
-  test('when init is called, should post INIT message to worker', () => {
-    const { result } = renderHook(() => useSearchWorker());
-
-    act(() => {
-      result.current.init('https://example.com/meta.json');
-    });
+  test('when mounted, should post INIT message to worker', () => {
+    renderHook(() => useSearchWorker('/meta.json'));
 
     expect(mockWorker.postMessage).toHaveBeenCalledWith({
       type: 'INIT',
-      metaUrl: 'https://example.com/meta.json',
+      metaUrl: '/meta.json',
     });
   });
 
   test('when worker sends STATUS response, should update dbStatus', async () => {
-    const { result } = renderHook(() => useSearchWorker());
-
-    act(() => {
-      result.current.init('/meta.json');
-    });
+    const { result } = renderHook(() => useSearchWorker('/meta.json'));
 
     await vi.waitFor(() => {
       expect(mockWorker.onmessage).not.toBeNull();
@@ -72,7 +62,7 @@ describe('useSearchWorker', () => {
   });
 
   test('when search is called, should post SEARCH message to worker', () => {
-    const { result } = renderHook(() => useSearchWorker());
+    const { result } = renderHook(() => useSearchWorker('/meta.json'));
 
     act(() => {
       result.current.search({
@@ -97,7 +87,7 @@ describe('useSearchWorker', () => {
   });
 
   test('when worker sends SEARCH_RESULT, should update results', async () => {
-    const { result } = renderHook(() => useSearchWorker());
+    const { result } = renderHook(() => useSearchWorker('/meta.json'));
 
     act(() => {
       result.current.search({
@@ -109,7 +99,11 @@ describe('useSearchWorker', () => {
       });
     });
 
-    const requestId = mockWorker.postMessage.mock.calls[0][0].requestId;
+    // INIT が最初に呼ばれ、次に SEARCH
+    const searchCall = mockWorker.postMessage.mock.calls.find(
+      (c) => c[0].type === 'SEARCH',
+    );
+    const requestId = searchCall?.[0].requestId;
 
     await vi.waitFor(() => {
       expect(mockWorker.onmessage).not.toBeNull();
@@ -119,17 +113,17 @@ describe('useSearchWorker', () => {
       mockWorker.simulateMessage({
         type: 'SEARCH_RESULT',
         requestId,
-        items: [{ id: 1, lang: 'ja', surface: '猫' }],
+        items: [{ id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'] }],
         totalApprox: 1,
       });
     });
 
-    expect(result.current.items).toEqual([{ id: 1, lang: 'ja', surface: '猫' }]);
+    expect(result.current.items).toEqual([{ id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'] }]);
     expect(result.current.totalApprox).toBe(1);
   });
 
   test('when worker sends ERROR, should update error state', async () => {
-    const { result } = renderHook(() => useSearchWorker());
+    const { result } = renderHook(() => useSearchWorker('/meta.json'));
 
     await vi.waitFor(() => {
       expect(mockWorker.onmessage).not.toBeNull();
@@ -150,7 +144,7 @@ describe('useSearchWorker', () => {
   });
 
   test('when resetDb is called, should post RESET_DB message', () => {
-    const { result } = renderHook(() => useSearchWorker());
+    const { result } = renderHook(() => useSearchWorker('/meta.json'));
 
     act(() => {
       result.current.resetDb();
@@ -160,7 +154,7 @@ describe('useSearchWorker', () => {
   });
 
   test('when STATUS response has progress, should update progress', async () => {
-    const { result } = renderHook(() => useSearchWorker());
+    const { result } = renderHook(() => useSearchWorker('/meta.json'));
 
     await vi.waitFor(() => {
       expect(mockWorker.onmessage).not.toBeNull();

@@ -7,6 +7,7 @@ import { ErrorRecovery } from './components/ErrorRecovery';
 import { LicensePage } from './components/LicensePage';
 import { Footer } from './components/Footer';
 import { useSearchWorker } from './hooks/useSearchWorker';
+import { useHybridRanking } from './hooks/useHybridRanking';
 import { META_URL, DEFAULT_PAGE_SIZE } from '../shared/constants';
 import type { SearchMode, Lang } from '../shared/types';
 
@@ -38,6 +39,7 @@ export function App() {
   const [offset, setOffset] = useState(0);
 
   const { search, resetDb, retry, dbStatus, version, progress, sources, items, totalApprox, error, searching } = worker;
+  const ranked = useHybridRanking({ items, lang, query });
 
   useEffect(() => {
     if (dbStatus !== 'ready' || query.trim() === '') return;
@@ -103,9 +105,9 @@ export function App() {
         />
       )}
       <ResultList
-        items={items}
+        items={ranked.items}
         query={query}
-        searching={searching}
+        searching={searching || ranked.ranking}
         offset={offset}
         totalApprox={totalApprox}
         pageSize={DEFAULT_PAGE_SIZE}

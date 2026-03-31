@@ -27,6 +27,14 @@ export interface EntryRow {
   word: string;
   pos?: string;
   sources: string[];
+  ranking?: RankingInfo;
+}
+
+export interface RankingInfo {
+  combinedScore: number;
+  googleTotalResults?: number;
+  ollamaScore?: number;
+  reason?: string;
 }
 
 export type WorkerRequest =

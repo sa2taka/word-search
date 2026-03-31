@@ -49,7 +49,6 @@ function createMockDeps(
     storage: createInMemoryStorage(),
     fetchMeta: vi.fn().mockResolvedValue(SAMPLE_META),
     downloadDb: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
-    computeHash: vi.fn().mockResolvedValue('abc123'),
     initSqlite: vi.fn().mockResolvedValue({} as SqlJsStatic),
     openDb: vi.fn().mockReturnValue({ close: vi.fn() } as unknown as Database),
     ...overrides,
@@ -98,7 +97,6 @@ describe('DbManager', () => {
       await manager.init('/meta.json', postResponse);
 
       expect(deps.downloadDb).toHaveBeenCalled();
-      expect(deps.computeHash).toHaveBeenCalled();
       expect(deps.openDb).toHaveBeenCalled();
       expect(await storage.exists()).toBe(true);
       expect(await storage.readVersion()).toBe('2.0');
@@ -109,24 +107,6 @@ describe('DbManager', () => {
       expect(readyResponse).toEqual(
         expect.objectContaining({ type: 'STATUS', status: 'ready', version: '2.0' }),
       );
-    });
-
-    test('when hash mismatch, should throw DB_HASH_MISMATCH', async () => {
-      const deps = createMockDeps({
-        computeHash: vi.fn().mockResolvedValue('wrong_hash'),
-      });
-      const manager = createDbManager(deps);
-      const { postResponse } = collectResponses();
-
-      let error: unknown;
-      try {
-        await manager.init('/meta.json', postResponse);
-      } catch (e) {
-        error = e;
-      }
-
-      expect(error).toBeInstanceOf(WorkerError);
-      expect((error as WorkerError).code).toBe('DB_HASH_MISMATCH');
     });
 
     test('when meta fetch fails but local DB exists, should use local DB', async () => {
@@ -249,11 +229,8 @@ describe('DbManager', () => {
       responses.length = 0;
 
       // Now update
-      const newMeta = { ...SAMPLE_META, version: '3.0', sha256: 'def456' };
+      const newMeta = { ...SAMPLE_META, version: '3.0' };
       (deps.fetchMeta as ReturnType<typeof vi.fn>).mockResolvedValue(newMeta);
-      (deps.computeHash as ReturnType<typeof vi.fn>).mockResolvedValue(
-        'def456',
-      );
 
       await manager.updateDb('/meta.json', postResponse);
 

@@ -12,7 +12,6 @@ export interface DbManagerDeps {
     totalBytes: number,
     onProgress: (downloaded: number) => void,
   ) => Promise<Uint8Array>;
-  computeHash: (data: Uint8Array) => Promise<string>;
   initSqlite: () => Promise<SqlJsStatic>;
   openDb: (sql: SqlJsStatic, data?: Uint8Array) => Database;
 }
@@ -43,11 +42,6 @@ export function createDbManager(deps: DbManagerDeps) {
         progress: Math.round((downloaded / meta.bytes) * 100),
       });
     });
-
-    const hash = await deps.computeHash(data);
-    if (hash !== meta.sha256) {
-      throw new WorkerError('DB_HASH_MISMATCH', 'Downloaded DB hash mismatch');
-    }
 
     await deps.storage.write(data);
     await deps.storage.writeVersion(meta.version);

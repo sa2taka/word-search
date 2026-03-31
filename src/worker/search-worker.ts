@@ -1,7 +1,6 @@
 import type { DictMeta, WorkerRequest, WorkerResponse } from '../shared/types';
 import { createDispatcher, type PostResponse } from './dispatcher';
 import { createDbManager } from './db-manager';
-import { computeSha256 } from './hash';
 import { initSqlite, openDb } from './db';
 import { OpfsStorage } from './opfs-storage';
 import { executeSearch } from './search';
@@ -58,7 +57,6 @@ const manager = createDbManager({
   storage: new OpfsStorage(),
   fetchMeta,
   downloadDb,
-  computeHash: computeSha256,
   initSqlite: () => initSqlite('/sql-wasm.wasm'),
   openDb,
 });

@@ -70,7 +70,6 @@ export type WorkerResponse =
 export type ErrorCode =
   | 'META_FETCH_FAILED'
   | 'DB_DOWNLOAD_FAILED'
-  | 'DB_HASH_MISMATCH'
   | 'DB_OPEN_FAILED'
   | 'REGEX_INVALID'
   | 'SQL_ERROR'

@@ -94,6 +94,7 @@ Princeton University and LICENSEE agrees to preserve same.
 
   async *parse(dictDir: string): AsyncIterable<EntryInput> {
     const seen = new Set<string>();
+    let skippedMultiWord = 0;
 
     for (const indexFile of INDEX_FILES) {
       const filePath = join(dictDir, indexFile);
@@ -110,11 +111,18 @@ Princeton University and LICENSEE agrees to preserve same.
         const rawLemma = parts[0]!;
         const posChar = parts[1]!;
 
-        const lemma = rawLemma.replace(/_/g, ' ');
+        const underscoreCount = rawLemma.split('_').length - 1;
+        if (underscoreCount >= 2) {
+          skippedMultiWord++;
+          continue;
+        }
+
+        // 2-word compounds: remove underscore to join (e.g. "ice_cream" → "icecream")
+        const lemma = rawLemma.replace(/_/g, '');
+
         const pos = POS_MAP[posChar];
         if (!pos) continue;
 
-        // Deduplicate by lemma+pos
         const key = `${lemma}\t${pos}`;
         if (seen.has(key)) continue;
         seen.add(key);
@@ -128,6 +136,6 @@ Princeton University and LICENSEE agrees to preserve same.
       }
     }
 
-    console.log(`  Parsed ${seen.size.toLocaleString()} WordNet entries`);
+    console.log(`  Parsed ${seen.size.toLocaleString()} WordNet entries (skipped ${skippedMultiWord.toLocaleString()} multi-word)`);
   },
 };

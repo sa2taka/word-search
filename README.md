@@ -42,18 +42,18 @@ npx playwright install chromium  # E2Eテスト用
 
 ## コマンド
 
-| コマンド | 説明 |
-|---|---|
-| `npm run dev` | 開発サーバー起動 |
-| `npm run build` | プロダクションビルド |
-| `npm run preview` | ビルド結果プレビュー |
-| `npm run test` | ユニットテスト実行 |
+| コマンド             | 説明                           |
+| -------------------- | ------------------------------ |
+| `npm run dev`        | 開発サーバー起動               |
+| `npm run build`      | プロダクションビルド           |
+| `npm run preview`    | ビルド結果プレビュー           |
+| `npm run test`       | ユニットテスト実行             |
 | `npm run test:watch` | ユニットテスト（watch モード） |
-| `npm run e2e` | E2E テスト実行 |
-| `npm run e2e:headed` | E2E テスト（ブラウザ表示） |
-| `npm run lint` | ESLint 実行 |
-| `npm run deploy` | Cloudflare Workers にデプロイ |
-| `npm run build:dict` | 辞書 DB ビルド |
+| `npm run e2e`        | E2E テスト実行                 |
+| `npm run e2e:headed` | E2E テスト（ブラウザ表示）     |
+| `npm run lint`       | ESLint 実行                    |
+| `npm run deploy`     | Cloudflare Workers にデプロイ  |
+| `npm run build:dict` | 辞書 DB ビルド                 |
 
 ## デプロイ
 
@@ -83,7 +83,7 @@ npm run deploy          # = wrangler deploy
 npm run build:dict
 
 # 2. R2 にアップロード（meta.json + dict.db + ライセンス）
-R2_BUCKET_NAME=<bucket> bash scripts/upload-dict.sh dist-dict
+R2_BUCKET_NAME=word-search-dict bash scripts/upload-dict.sh dist-dict
 ```
 
 GitHub Actions の "Upload Dictionary to R2" ワークフローでも実行可能（手動トリガー、要 `R2_BUCKET_NAME` Secret）。

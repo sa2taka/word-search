@@ -1,4 +1,4 @@
-export type SearchMode = 'contains' | 'prefix' | 'regex';
+export type SearchMode = 'wildcard' | 'contains' | 'prefix' | 'regex';
 export type DbStatus = 'idle' | 'downloading' | 'ready' | 'error' | 'updatable';
 export type Lang = 'ja' | 'en';
 

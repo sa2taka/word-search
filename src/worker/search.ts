@@ -13,15 +13,37 @@ function buildWhereSql(mode: SearchMode): string {
   switch (mode) {
     case 'regex':
       return 'lang = ? AND regexp(?, word)';
+    case 'wildcard':
     case 'contains':
     case 'prefix':
       return "lang = ? AND word LIKE ? ESCAPE '\\'";
   }
 }
 
+/**
+ * wildcard モード: ?/？ を SQLite LIKE の _ に変換。
+ * 他の LIKE 特殊文字（%, _, \）はエスケープ。
+ */
+function buildWildcardPattern(query: string): string {
+  const normalized = normalizeWord(query);
+  let result = '';
+  for (const ch of normalized) {
+    if (ch === '?' || ch === '？') {
+      result += '_';
+    } else if (ch === '%' || ch === '_' || ch === '\\') {
+      result += '\\' + ch;
+    } else {
+      result += ch;
+    }
+  }
+  return result;
+}
+
 function buildPattern(mode: SearchMode, query: string): string {
   const normalized = normalizeWord(query);
   switch (mode) {
+    case 'wildcard':
+      return buildWildcardPattern(query);
     case 'contains':
       return `%${escapeLike(normalized)}%`;
     case 'prefix':

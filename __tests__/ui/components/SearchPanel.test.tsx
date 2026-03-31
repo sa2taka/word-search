@@ -8,7 +8,6 @@ const defaultProps = {
   query: '',
   mode: 'contains' as SearchMode,
   lang: 'ja' as Lang,
-  searching: false,
   onQueryChange: () => {},
   onModeChange: () => {},
   onLangChange: () => {},

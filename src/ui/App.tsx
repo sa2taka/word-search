@@ -33,7 +33,7 @@ export function App() {
   const worker = useSearchWorker(META_URL);
   const [page, setPage] = useState<Page>('search');
   const [query, setQuery] = useState('');
-  const [mode, setMode] = useState<SearchMode>('regex');
+  const [mode, setMode] = useState<SearchMode>('wildcard');
   const [lang, setLang] = useState<Lang>('ja');
   const [offset, setOffset] = useState(0);
 
@@ -51,6 +51,7 @@ export function App() {
 
   const handleModeChange = useCallback((value: SearchMode) => {
     setMode(value);
+    setQuery('');
     setOffset(0);
   }, []);
 
@@ -68,7 +69,7 @@ export function App() {
       <>
         <Header dbStatus={dbStatus} version={version} />
         <LicensePage sources={sources} onBack={() => setPage('search')} />
-        <Footer sources={sources} onNavigateToLicense={() => setPage('license')} />
+        <Footer onNavigateToLicense={() => setPage('license')} />
       </>
     );
   }
@@ -83,7 +84,6 @@ export function App() {
         query={query}
         mode={mode}
         lang={lang}
-        searching={searching}
         onQueryChange={handleQueryChange}
         onModeChange={handleModeChange}
         onLangChange={handleLangChange}
@@ -104,12 +104,14 @@ export function App() {
       )}
       <ResultList
         items={items}
+        query={query}
+        searching={searching}
         offset={offset}
         totalApprox={totalApprox}
         pageSize={DEFAULT_PAGE_SIZE}
         onPageChange={setOffset}
       />
-      <Footer sources={sources} onNavigateToLicense={() => setPage('license')} />
+      <Footer onNavigateToLicense={() => setPage('license')} />
     </>
   );
 }

@@ -12,6 +12,8 @@ describe('ResultList', () => {
         offset={0}
         totalApprox={0}
         pageSize={50}
+        query="test"
+        searching={false}
         onPageChange={() => {}}
       />,
     );
@@ -31,6 +33,8 @@ describe('ResultList', () => {
         offset={0}
         totalApprox={2}
         pageSize={50}
+        query="test"
+        searching={false}
         onPageChange={() => {}}
       />,
     );
@@ -50,6 +54,8 @@ describe('ResultList', () => {
         offset={0}
         totalApprox={100}
         pageSize={50}
+        query="test"
+        searching={false}
         onPageChange={() => {}}
       />,
     );
@@ -68,6 +74,8 @@ describe('ResultList', () => {
         offset={0}
         totalApprox={100}
         pageSize={50}
+        query="test"
+        searching={false}
         onPageChange={() => {}}
       />,
     );
@@ -88,6 +96,8 @@ describe('ResultList', () => {
         offset={0}
         totalApprox={100}
         pageSize={50}
+        query="test"
+        searching={false}
         onPageChange={onPageChange}
       />,
     );
@@ -110,6 +120,8 @@ describe('ResultList', () => {
         offset={50}
         totalApprox={100}
         pageSize={50}
+        query="test"
+        searching={false}
         onPageChange={onPageChange}
       />,
     );

@@ -69,7 +69,7 @@ export function App() {
       <>
         <Header dbStatus={dbStatus} version={version} />
         <LicensePage sources={sources} onBack={() => setPage('search')} />
-        <Footer onNavigateToLicense={() => setPage('license')} />
+        <Footer onNavigateToLicense={() => setPage('license')} onResetStorage={handleReset} />
       </>
     );
   }
@@ -111,7 +111,7 @@ export function App() {
         pageSize={DEFAULT_PAGE_SIZE}
         onPageChange={setOffset}
       />
-      <Footer onNavigateToLicense={() => setPage('license')} />
+      <Footer onNavigateToLicense={() => setPage('license')} onResetStorage={handleReset} />
     </>
   );
 }

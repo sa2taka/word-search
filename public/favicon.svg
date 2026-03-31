@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <clipPath id="c"><rect x="2" y="2" width="28" height="28" rx="4"/></clipPath>
+  </defs>
+  <!-- Background -->
+  <rect x="2" y="2" width="28" height="28" rx="4" fill="#1e293b"/>
+  <g clip-path="url(#c)">
+    <!-- Grid lines -->
+    <line x1="12" y1="2" x2="12" y2="30" stroke="#334155" stroke-width="1"/>
+    <line x1="22" y1="2" x2="22" y2="30" stroke="#334155" stroke-width="1"/>
+    <line x1="2" y1="12" x2="30" y2="12" stroke="#334155" stroke-width="1"/>
+    <line x1="2" y1="22" x2="30" y2="22" stroke="#334155" stroke-width="1"/>
+    <!-- ? in center cell -->
+    <text x="17" y="20" font-family="ui-monospace,SFMono-Regular,monospace" font-size="13" font-weight="700" fill="#60a5fa" text-anchor="middle">?</text>
+    <!-- Letter hints -->
+    <text x="7" y="20" font-family="ui-monospace,SFMono-Regular,monospace" font-size="9" font-weight="600" fill="#94a3b8" text-anchor="middle">a</text>
+    <text x="26" y="10" font-family="ui-monospace,SFMono-Regular,monospace" font-size="9" font-weight="600" fill="#94a3b8" text-anchor="middle">z</text>
+  </g>
+</svg>

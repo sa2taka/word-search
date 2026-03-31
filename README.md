@@ -7,7 +7,7 @@ OPFS + SQLite WASM を使ったオフライン対応の辞書検索 SPA。
 - **UI**: React 19, vanilla CSS (BEM + CSS custom properties)
 - **検索エンジン**: sql.js (SQLite WASM) on Web Worker
 - **ストレージ**: Origin Private File System (OPFS)
-- **ビルド**: Vite 7, TypeScript 5.9
+- **ビルド**: Vite 8, TypeScript 6
 - **テスト**: Vitest + Testing Library (unit), Playwright (E2E, Chromium only)
 - **デプロイ**: Cloudflare Pages (GitHub連携) + R2
 
@@ -25,8 +25,9 @@ UI と Worker は `postMessage` で型付きメッセージング通信を行う
 
 ### 検索
 
-`surface`（見出し語）と `reading`（読み）の両方を検索対象とする。3 つのモードに対応:
+正規化済みの `word` カラムを検索。4 つのモードに対応:
 
+- **wildcard** (デフォルト): `?` で任意の1文字にマッチ（SQLite LIKE `_`）
 - **contains**: 部分一致（LIKE）
 - **prefix**: 前方一致（LIKE）
 - **regex**: 正規表現（カスタム UDF, 2 秒タイムアウト）
@@ -53,19 +54,59 @@ npx playwright install chromium  # E2Eテスト用
 
 ## デプロイ
 
+SPA 本体は **Cloudflare Pages**、辞書データは **Cloudflare R2** にホストする。
+
+### 前提
+
+1. [Cloudflare Dashboard](https://dash.cloudflare.com/) でアカウント作成
+2. R2 バケットを作成（例: `word-search-dict`）
+3. R2 バケットにカスタムドメインまたはパブリックアクセスを設定
+4. wrangler CLI でログイン:
+
+```bash
+npx wrangler login
+```
+
 ### Pages (SPA)
 
-Cloudflare Dashboard で GitHub リポジトリを連携。main push で自動ビルド＆デプロイ。
+```bash
+# ビルド → デプロイ
+npm run build
+npx wrangler pages deploy dist --project-name word-search
+```
+
+または Cloudflare Dashboard で GitHub 連携すれば main push で自動デプロイ:
+
+| 設定 | 値 |
+|---|---|
+| Framework preset | None |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| Node.js version | 22（環境変数 `NODE_VERSION=22`） |
 
 ### R2 (辞書データ)
 
 ```bash
-# ローカルから直接アップロード
-R2_BUCKET_NAME=<bucket> bash scripts/upload-dict.sh dist-dict
+# 1. 辞書ビルド
+npm run build:dict
 
-# GitHub Actions (手動トリガー)
+# 2. R2 にアップロード（meta.json + dict.db + ライセンス）
+R2_BUCKET_NAME=<bucket> bash scripts/upload-dict.sh dist-dict
+```
+
+GitHub Actions 経由でも可能（手動トリガー）:
+
+```bash
+# リポジトリの Settings → Secrets に以下を設定:
+#   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, R2_BUCKET_NAME
 # Actions → "Upload Dictionary to R2" → Run workflow
 ```
+
+### META_URL の設定
+
+`src/shared/constants.ts` の `META_URL` が辞書メタデータの取得先。
+開発時はローカルの `dist-dict/` から自動配信される（`localDict` Vite プラグイン）。
+本番では R2 のパブリック URL を指定する。
 
 ## COOP/COEP
 

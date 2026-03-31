@@ -33,11 +33,11 @@ export function App() {
   const worker = useSearchWorker(META_URL);
   const [page, setPage] = useState<Page>('search');
   const [query, setQuery] = useState('');
-  const [mode, setMode] = useState<SearchMode>('contains');
+  const [mode, setMode] = useState<SearchMode>('regex');
   const [lang, setLang] = useState<Lang>('ja');
   const [offset, setOffset] = useState(0);
 
-  const { search, resetDb, retry, dbStatus, version, progress, items, totalApprox, error } = worker;
+  const { search, resetDb, retry, dbStatus, version, progress, sources, items, totalApprox, error, searching } = worker;
 
   useEffect(() => {
     if (dbStatus !== 'ready' || query.trim() === '') return;
@@ -67,8 +67,8 @@ export function App() {
     return (
       <>
         <Header dbStatus={dbStatus} version={version} />
-        <LicensePage sources={[]} onBack={() => setPage('search')} />
-        <Footer onNavigateToLicense={() => setPage('license')} />
+        <LicensePage sources={sources} onBack={() => setPage('search')} />
+        <Footer sources={sources} onNavigateToLicense={() => setPage('license')} />
       </>
     );
   }
@@ -83,6 +83,7 @@ export function App() {
         query={query}
         mode={mode}
         lang={lang}
+        searching={searching}
         onQueryChange={handleQueryChange}
         onModeChange={handleModeChange}
         onLangChange={handleLangChange}
@@ -108,7 +109,7 @@ export function App() {
         pageSize={DEFAULT_PAGE_SIZE}
         onPageChange={setOffset}
       />
-      <Footer onNavigateToLicense={() => setPage('license')} />
+      <Footer sources={sources} onNavigateToLicense={() => setPage('license')} />
     </>
   );
 }

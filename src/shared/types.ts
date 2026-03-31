@@ -52,6 +52,7 @@ export type WorkerResponse =
       message?: string;
       version?: string;
       progress?: number;
+      sources?: DictSource[];
     }
   | {
       type: 'SEARCH_RESULT';

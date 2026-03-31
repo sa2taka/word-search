@@ -4,7 +4,7 @@ import { Footer } from '../../../src/ui/components/Footer';
 
 describe('Footer', () => {
   test('when rendered, should display license link', () => {
-    render(<Footer onNavigateToLicense={() => {}} />);
+    render(<Footer sources={[]} onNavigateToLicense={() => {}} />);
 
     expect(screen.getByRole('button', { name: /license/i })).toBeInTheDocument();
   });
@@ -13,7 +13,7 @@ describe('Footer', () => {
     const { default: userEvent } = await import('@testing-library/user-event');
     const user = userEvent.setup();
     let called = false;
-    render(<Footer onNavigateToLicense={() => { called = true; }} />);
+    render(<Footer sources={[]} onNavigateToLicense={() => { called = true; }} />);
 
     await user.click(screen.getByRole('button', { name: /license/i }));
 

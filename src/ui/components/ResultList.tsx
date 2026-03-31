@@ -32,9 +32,6 @@ export function ResultList({
         {items.map((entry) => (
           <li key={entry.id} className="result-list__item">
             <span className="result-list__word">{entry.word}</span>
-            {entry.pos && (
-              <span className="result-list__pos">{entry.pos}</span>
-            )}
           </li>
         ))}
       </ul>

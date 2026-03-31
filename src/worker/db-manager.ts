@@ -60,8 +60,6 @@ export function createDbManager(deps: DbManagerDeps) {
     },
 
     async init(metaUrl: string, post: PostResponse): Promise<void> {
-      post({ type: 'STATUS', status: 'downloading', progress: 0 });
-
       const localVersion = await deps.storage.readVersion();
       const hasLocal = localVersion !== null && (await deps.storage.exists());
 
@@ -84,13 +82,14 @@ export function createDbManager(deps: DbManagerDeps) {
       if (hasLocal && localVersion === meta.version) {
         const data = await deps.storage.read();
         await openAndSetDb(data);
-        post({ type: 'STATUS', status: 'ready', version: localVersion });
+        post({ type: 'STATUS', status: 'ready', version: localVersion, sources: meta.sources });
         return;
       }
 
+      post({ type: 'STATUS', status: 'downloading', progress: 0 });
       const data = await downloadVerifySave(meta, post);
       await openAndSetDb(data);
-      post({ type: 'STATUS', status: 'ready', version: meta.version });
+      post({ type: 'STATUS', status: 'ready', version: meta.version, sources: meta.sources });
     },
 
     async checkUpdate(metaUrl: string, post: PostResponse): Promise<void> {

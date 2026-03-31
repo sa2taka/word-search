@@ -1,9 +1,11 @@
 import type { SearchMode, Lang } from '../../shared/types';
+import { normalizeWord } from '../../shared/normalize';
 
 interface SearchPanelProps {
   query: string;
   mode: SearchMode;
   lang: Lang;
+  searching: boolean;
   onQueryChange: (query: string) => void;
   onModeChange: (mode: SearchMode) => void;
   onLangChange: (lang: Lang) => void;
@@ -13,12 +15,16 @@ export function SearchPanel({
   query,
   mode,
   lang,
+  searching,
   onQueryChange,
   onModeChange,
   onLangChange,
 }: SearchPanelProps) {
+  const normalized = query.trim() ? normalizeWord(query.trim()) : '';
+  const showNormalized = normalized !== '' && normalized !== query.trim();
+
   return (
-    <div className="search-panel">
+    <div className={`search-panel ${searching ? 'search-panel--searching' : ''}`}>
       <div className="search-panel__input-wrapper">
         <input
           type="search"
@@ -28,6 +34,9 @@ export function SearchPanel({
           placeholder="Search words..."
           aria-label="Search"
         />
+        {showNormalized && (
+          <span className="search-panel__normalized">{normalized}</span>
+        )}
       </div>
       <div className="search-panel__controls">
         <div className="search-panel__control-group">
@@ -40,9 +49,9 @@ export function SearchPanel({
             value={mode}
             onChange={(e) => onModeChange(e.target.value as SearchMode)}
           >
+            <option value="regex">Regex</option>
             <option value="contains">Contains</option>
             <option value="prefix">Prefix</option>
-            <option value="regex">Regex</option>
           </select>
         </div>
         <div className="search-panel__control-group">

@@ -39,24 +39,6 @@ describe('ResultList', () => {
     expect(screen.getByText('いぬ')).toBeInTheDocument();
   });
 
-  test('when entry has pos, should display pos', () => {
-    const items: EntryRow[] = [
-      { id: 1, lang: 'ja', word: 'ねこ', pos: '名詞', sources: ['jmdict'] },
-    ];
-
-    render(
-      <ResultList
-        items={items}
-        offset={0}
-        totalApprox={1}
-        pageSize={50}
-        onPageChange={() => {}}
-      />,
-    );
-
-    expect(screen.getByText('名詞')).toBeInTheDocument();
-  });
-
   test('when there are more results, should enable next button', () => {
     const items: EntryRow[] = [
       { id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'] },

@@ -83,11 +83,9 @@ describe('DbManager', () => {
       const readyResponse = responses.find(
         (r) => r.type === 'STATUS' && r.status === 'ready',
       );
-      expect(readyResponse).toEqual({
-        type: 'STATUS',
-        status: 'ready',
-        version: '2.0',
-      });
+      expect(readyResponse).toEqual(
+        expect.objectContaining({ type: 'STATUS', status: 'ready', version: '2.0' }),
+      );
       expect(deps.downloadDb).not.toHaveBeenCalled();
     });
 
@@ -108,11 +106,9 @@ describe('DbManager', () => {
       const readyResponse = responses.find(
         (r) => r.type === 'STATUS' && r.status === 'ready',
       );
-      expect(readyResponse).toEqual({
-        type: 'STATUS',
-        status: 'ready',
-        version: '2.0',
-      });
+      expect(readyResponse).toEqual(
+        expect.objectContaining({ type: 'STATUS', status: 'ready', version: '2.0' }),
+      );
     });
 
     test('when hash mismatch, should throw DB_HASH_MISMATCH', async () => {
@@ -192,11 +188,9 @@ describe('DbManager', () => {
       const readyResponse = responses.find(
         (r) => r.type === 'STATUS' && r.status === 'ready',
       );
-      expect(readyResponse).toEqual({
-        type: 'STATUS',
-        status: 'ready',
-        version: '2.0',
-      });
+      expect(readyResponse).toEqual(
+        expect.objectContaining({ type: 'STATUS', status: 'ready', version: '2.0' }),
+      );
     });
   });
 

@@ -27,9 +27,11 @@ interface UseSearchWorkerReturn {
   dbStatus: DbStatus;
   version?: string;
   progress?: number;
+  sources: import('../../shared/types').DictSource[];
   items: EntryRow[];
   totalApprox: number;
   error: WorkerError | null;
+  searching: boolean;
   retry: () => void;
   search: (params: SearchParams) => void;
   cancel: () => void;
@@ -46,9 +48,11 @@ export function useSearchWorker(metaUrl: string): UseSearchWorkerReturn {
   const [dbStatus, setDbStatus] = useState<DbStatus>('idle');
   const [version, setVersion] = useState<string | undefined>();
   const [progress, setProgress] = useState<number | undefined>();
+  const [sources, setSources] = useState<import('../../shared/types').DictSource[]>([]);
   const [items, setItems] = useState<EntryRow[]>([]);
   const [totalApprox, setTotalApprox] = useState(0);
   const [error, setError] = useState<WorkerError | null>(null);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     let disposed = false;
@@ -83,12 +87,14 @@ export function useSearchWorker(metaUrl: string): UseSearchWorkerReturn {
           setDbStatus(data.status);
           if (data.version != null) setVersion(data.version);
           if (data.progress != null) setProgress(data.progress);
+          if (data.sources != null) setSources(data.sources);
           if (data.status === 'ready') setError(null);
           break;
         case 'SEARCH_RESULT':
           if (data.requestId === requestIdRef.current) {
             setItems(data.items);
             setTotalApprox(data.totalApprox ?? 0);
+            setSearching(false);
           }
           break;
         case 'ERROR':
@@ -119,6 +125,7 @@ export function useSearchWorker(metaUrl: string): UseSearchWorkerReturn {
     (params: SearchParams) => {
       const requestId = crypto.randomUUID();
       requestIdRef.current = requestId;
+      setSearching(true);
       post({ type: 'SEARCH', ...params, requestId });
     },
     [post],
@@ -155,7 +162,9 @@ export function useSearchWorker(metaUrl: string): UseSearchWorkerReturn {
     progress,
     items,
     totalApprox,
+    sources,
     error,
+    searching,
     retry,
     search,
     cancel,

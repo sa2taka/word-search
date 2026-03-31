@@ -1,8 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, test, expect, vi } from 'vitest';
-import { SearchPanel } from './SearchPanel';
-import type { SearchMode, Lang } from '../../shared/types';
+import { SearchPanel } from '../../../src/ui/components/SearchPanel';
+import type { SearchMode, Lang } from '../../../src/shared/types';
 
 const defaultProps = {
   query: '',

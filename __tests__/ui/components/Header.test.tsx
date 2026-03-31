@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, test, expect } from 'vitest';
-import { Header } from './Header';
+import { Header } from '../../../src/ui/components/Header';
 
 describe('Header', () => {
   test('when rendered, should display app title "Word Search"', () => {

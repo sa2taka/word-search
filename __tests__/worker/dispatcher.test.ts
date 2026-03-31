@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from 'vitest';
-import type { WorkerRequest } from '../shared/types';
-import { createDispatcher, type HandlerMap } from './dispatcher';
-import { WorkerError } from './worker-error';
+import type { WorkerRequest } from '../../src/shared/types';
+import { createDispatcher, type HandlerMap } from '../../src/worker/dispatcher';
+import { WorkerError } from '../../src/worker/worker-error';
 
 function createStubHandlers(
   overrides: Partial<HandlerMap> = {},

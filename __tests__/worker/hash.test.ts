@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { computeSha256 } from './hash';
+import { computeSha256 } from '../../src/worker/hash';
 
 describe('computeSha256', () => {
   test('should return correct hex hash for known input', async () => {

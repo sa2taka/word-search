@@ -3,8 +3,8 @@ import {
   createRegexpMatcher,
   setRegexpDeadline,
   clearRegexpDeadline,
-} from './regexp-udf';
-import { WorkerError } from './worker-error';
+} from '../../src/worker/regexp-udf';
+import { WorkerError } from '../../src/worker/worker-error';
 
 describe('createRegexpMatcher', () => {
   test('when pattern matches value, should return 1', () => {

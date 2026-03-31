@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { useSearchWorker } from './useSearchWorker';
-import type { WorkerResponse } from '../../shared/types';
+import { useSearchWorker } from '../../../src/ui/hooks/useSearchWorker';
+import type { WorkerResponse } from '../../../src/shared/types';
 
 class MockWorker {
   onmessage: ((e: MessageEvent) => void) | null = null;

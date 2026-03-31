@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, test, expect, vi } from 'vitest';
-import { ResultList } from './ResultList';
-import type { EntryRow } from '../../shared/types';
+import { ResultList } from '../../../src/ui/components/ResultList';
+import type { EntryRow } from '../../../src/shared/types';
 
 describe('ResultList', () => {
   test('when items is empty, should display empty message', () => {

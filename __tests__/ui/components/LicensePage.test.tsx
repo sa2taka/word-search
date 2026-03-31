@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, test, expect, vi } from 'vitest';
-import { LicensePage } from './LicensePage';
-import type { DictSource } from '../../shared/types';
+import { LicensePage } from '../../../src/ui/components/LicensePage';
+import type { DictSource } from '../../../src/shared/types';
 
 describe('LicensePage', () => {
   test('when rendered, should display page title', () => {

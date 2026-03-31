@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, test, expect } from 'vitest';
-import { StatusDisplay } from './StatusDisplay';
+import { StatusDisplay } from '../../../src/ui/components/StatusDisplay';
 
 describe('StatusDisplay', () => {
   test('when status is idle, should display idle message', () => {

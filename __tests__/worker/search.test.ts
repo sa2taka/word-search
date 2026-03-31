@@ -1,9 +1,9 @@
 import { describe, test, expect } from 'vitest';
 import type { Database } from 'sql.js';
-import type { Lang } from '../shared/types';
-import { initSqlite, openDb } from './db';
-import { executeSearch } from './search';
-import { WorkerError } from './worker-error';
+import type { Lang } from '../../src/shared/types';
+import { initSqlite, openDb } from '../../src/worker/db';
+import { executeSearch } from '../../src/worker/search';
+import { WorkerError } from '../../src/worker/worker-error';
 
 interface TestEntry {
   lang: Lang;

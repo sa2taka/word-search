@@ -1,9 +1,9 @@
 import { describe, test, expect, vi } from 'vitest';
-import type { DictMeta, WorkerResponse } from '../shared/types';
-import type { DbStorage } from './storage';
+import type { DictMeta, WorkerResponse } from '../../src/shared/types';
+import type { DbStorage } from '../../src/worker/storage';
 import type { Database, SqlJsStatic } from 'sql.js';
-import { createDbManager, type DbManagerDeps } from './db-manager';
-import { WorkerError } from './worker-error';
+import { createDbManager, type DbManagerDeps } from '../../src/worker/db-manager';
+import { WorkerError } from '../../src/worker/worker-error';
 
 function createInMemoryStorage(): DbStorage {
   const files = new Map<string, Uint8Array>();

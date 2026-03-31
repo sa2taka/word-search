@@ -20,6 +20,7 @@ npm run lint         # ESLint
 ## ディレクトリ構造
 
 ```
+__tests__/        ユニットテスト（src/ のディレクトリ構造をミラー）
 src/shared/       型・定数（UI/Worker共有、他に依存しない）
 src/ui/           Reactコンポーネント + hooks + CSS
 src/worker/       Web Worker層（SQLite操作、OPFS、検索実行）

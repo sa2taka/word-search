@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, test, expect } from 'vitest';
-import { Footer } from './Footer';
+import { Footer } from '../../../src/ui/components/Footer';
 
 describe('Footer', () => {
   test('when rendered, should display license link', () => {

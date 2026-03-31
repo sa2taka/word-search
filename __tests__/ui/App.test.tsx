@@ -1,8 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { App } from './App';
+import { App } from '../../src/ui/App';
 
-vi.mock('./hooks/useSearchWorker', () => ({
+vi.mock('../../src/ui/hooks/useSearchWorker', () => ({
   useSearchWorker: () => mockHookReturn,
 }));
 

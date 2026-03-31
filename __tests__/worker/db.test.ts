@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { initSqlite, openDb } from './db';
+import { initSqlite, openDb } from '../../src/worker/db';
 
 describe('openDb', () => {
   test('should create database with regexp UDF available in SQL queries', async () => {

@@ -5,6 +5,9 @@ import { App } from '../../src/ui/App';
 vi.mock('../../src/ui/hooks/useSearchWorker', () => ({
   useSearchWorker: () => mockHookReturn,
 }));
+vi.mock('../../src/ui/hooks/useHybridRanking', () => ({
+  useHybridRanking: () => ({ items: mockHookReturn.items, ranking: false }),
+}));
 
 let mockHookReturn: Record<string, unknown>;
 

@@ -122,6 +122,65 @@ describe('useSearchWorker', () => {
     expect(result.current.totalApprox).toBe(1);
   });
 
+  test('when SEARCH_RESULT has no totalApprox, should preserve previous totalApprox', async () => {
+    const { result } = renderHook(() => useSearchWorker('/meta.json'));
+
+    act(() => {
+      result.current.search({
+        mode: 'prefix',
+        lang: 'ja',
+        query: 'test',
+        limit: 50,
+        offset: 0,
+      });
+    });
+
+    const firstSearchCall = mockWorker.postMessage.mock.calls.find(
+      (c) => c[0].type === 'SEARCH',
+    );
+    const firstRequestId = firstSearchCall?.[0].requestId;
+
+    await vi.waitFor(() => {
+      expect(mockWorker.onmessage).not.toBeNull();
+    });
+
+    act(() => {
+      mockWorker.simulateMessage({
+        type: 'SEARCH_RESULT',
+        requestId: firstRequestId,
+        items: [{ id: 1, lang: 'ja', word: 'test001', sources: ['test'] }],
+        totalApprox: 55,
+      });
+    });
+
+    expect(result.current.totalApprox).toBe(55);
+
+    act(() => {
+      result.current.search({
+        mode: 'prefix',
+        lang: 'ja',
+        query: 'test',
+        limit: 50,
+        offset: 50,
+      });
+    });
+
+    const secondSearchCall = mockWorker.postMessage.mock.calls
+      .filter((c) => c[0].type === 'SEARCH')
+      .at(-1);
+    const secondRequestId = secondSearchCall?.[0].requestId;
+
+    act(() => {
+      mockWorker.simulateMessage({
+        type: 'SEARCH_RESULT',
+        requestId: secondRequestId,
+        items: [{ id: 51, lang: 'ja', word: 'test051', sources: ['test'] }],
+      });
+    });
+
+    expect(result.current.totalApprox).toBe(55);
+  });
+
   test('when worker sends ERROR, should update error state', async () => {
     const { result } = renderHook(() => useSearchWorker('/meta.json'));
 

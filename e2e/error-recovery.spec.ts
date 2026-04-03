@@ -10,7 +10,7 @@ test.describe('Error recovery', () => {
     await expect(alert).toBeVisible({ timeout: 10_000 });
 
     await expect(page.locator('button:has-text("Retry")')).toBeVisible();
-    await expect(page.locator('button:has-text("Reset")')).toBeVisible();
+    await expect(page.locator('.error-recovery__btn--reset')).toBeVisible();
   });
 
   test('when clicking Retry after error, should re-initialize', async ({ page }) => {
@@ -36,7 +36,7 @@ test.describe('Error recovery', () => {
 
     await expect(page.locator('[role="alert"]')).toBeVisible({ timeout: 10_000 });
 
-    await page.locator('button:has-text("Reset")').click();
+    await page.locator('.error-recovery__btn--reset').click();
 
     const statusDot = page.locator('[data-testid="status-dot"]');
     await expect(statusDot).toHaveClass(/header__status-dot--idle/);

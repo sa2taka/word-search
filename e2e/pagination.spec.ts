@@ -57,4 +57,33 @@ test.describe('Pagination', () => {
     const pageInfo = page.locator('.result-list__page-info');
     await expect(pageInfo).toContainText('1–50 / 55');
   });
+
+  test('when on page 2, should still show pagination and allow navigation', async ({ page }) => {
+    await page.locator('#search-mode').selectOption('prefix');
+    await page.locator('[aria-label="Search"]').fill('たんご');
+
+    await expect(page.locator('.result-list__word').first()).toBeVisible();
+    await page.locator('button:has-text("Next")').click();
+
+    await expect(page.locator('.result-list__page-info')).toContainText('51–55 / 55');
+
+    const prevBtn = page.locator('button:has-text("Prev")');
+    await expect(prevBtn).toBeEnabled();
+
+    const nextBtn = page.locator('button:has-text("Next")');
+    await expect(nextBtn).toBeDisabled();
+  });
+
+  test('when navigating back and forth, should preserve total count', async ({ page }) => {
+    await page.locator('#search-mode').selectOption('prefix');
+    await page.locator('[aria-label="Search"]').fill('たんご');
+
+    await expect(page.locator('.result-list__page-info')).toContainText('1–50 / 55');
+
+    await page.locator('button:has-text("Next")').click();
+    await expect(page.locator('.result-list__page-info')).toContainText('51–55 / 55');
+
+    await page.locator('button:has-text("Prev")').click();
+    await expect(page.locator('.result-list__page-info')).toContainText('1–50 / 55');
+  });
 });

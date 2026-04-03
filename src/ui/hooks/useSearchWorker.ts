@@ -93,7 +93,7 @@ export function useSearchWorker(metaUrl: string): UseSearchWorkerReturn {
         case 'SEARCH_RESULT':
           if (data.requestId === requestIdRef.current) {
             setItems(data.items);
-            setTotalApprox(data.totalApprox ?? 0);
+            if (data.totalApprox != null) setTotalApprox(data.totalApprox);
             setSearching(false);
           }
           break;

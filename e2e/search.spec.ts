@@ -67,8 +67,14 @@ test.describe('Search functionality', () => {
     expect(enTexts).toContain('cat');
   });
 
-  test('when query is empty, should show no results message', async ({ page }) => {
+  test('when query is empty, should not show result list', async ({ page }) => {
     await page.locator('[aria-label="Search"]').fill('');
+
+    await expect(page.locator('.result-list')).not.toBeVisible();
+  });
+
+  test('when no matching results, should show no results message', async ({ page }) => {
+    await page.locator('[aria-label="Search"]').fill('zzzzzzzzz');
 
     await expect(page.locator('.result-list__empty')).toHaveText('No results');
   });

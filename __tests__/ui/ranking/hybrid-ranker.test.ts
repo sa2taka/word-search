@@ -11,6 +11,7 @@ function createEntry(id: number, word: string, lang: Lang = 'ja'): EntryRow {
     lang,
     word,
     sources: ['test'],
+    score: 5,
   };
 }
 
@@ -46,7 +47,8 @@ describe('rankEntriesWithHybridSignals', () => {
     );
 
     expect(result.items.map((entry) => entry.word)).toEqual(['ことば', 'ねこ', 'ぬま']);
-    expect(result.items[0]?.ranking).toMatchObject({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((result.items[0] as any).ranking).toMatchObject({
       googleTotalResults: 80_000,
       ollamaScore: 0.95,
       combinedScore: expect.any(Number),
@@ -76,7 +78,10 @@ describe('rankEntriesWithHybridSignals', () => {
     );
 
     expect(result.items.map((entry) => entry.word)).toEqual(['azure', 'apple']);
-    expect(result.items[0]?.ranking?.googleTotalResults).toBeUndefined();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((result.items[0] as any).ranking).toMatchObject({
+      googleTotalResults: undefined,
+    });
   });
 
   test('when ranking is disabled, should return original order without external lookups', async () => {

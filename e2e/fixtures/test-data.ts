@@ -3,19 +3,20 @@ export interface TestEntry {
   word: string;
   pos?: string;
   sources?: string[];
+  score?: number;
 }
 
 const jaBaseWords: TestEntry[] = [
-  { lang: 'ja', word: 'ねこ', pos: '名詞' },
-  { lang: 'ja', word: 'いぬ', pos: '名詞' },
-  { lang: 'ja', word: 'とうきよう', pos: '名詞' },
-  { lang: 'ja', word: 'おおさか', pos: '名詞' },
-  { lang: 'ja', word: 'きようと', pos: '名詞' },
-  { lang: 'ja', word: 'ほつかいどう', pos: '名詞' },
-  { lang: 'ja', word: 'たべる', pos: '動詞' },
-  { lang: 'ja', word: 'はしる', pos: '動詞' },
-  { lang: 'ja', word: 'うつくしい', pos: '形容詞' },
-  { lang: 'ja', word: 'おおきい', pos: '形容詞' },
+  { lang: 'ja', word: 'ねこ', pos: '名詞', score: 10 },
+  { lang: 'ja', word: 'いぬ', pos: '名詞', score: 9 },
+  { lang: 'ja', word: 'とうきよう', pos: '名詞', score: 8 },
+  { lang: 'ja', word: 'おおさか', pos: '名詞', score: 7 },
+  { lang: 'ja', word: 'きようと', pos: '名詞', score: 7 },
+  { lang: 'ja', word: 'ほつかいどう', pos: '名詞', score: 6 },
+  { lang: 'ja', word: 'たべる', pos: '動詞', score: 10 },
+  { lang: 'ja', word: 'はしる', pos: '動詞', score: 9 },
+  { lang: 'ja', word: 'うつくしい', pos: '形容詞', score: 7 },
+  { lang: 'ja', word: 'おおきい', pos: '形容詞', score: 9 },
 ];
 
 const enBaseWords: TestEntry[] = [

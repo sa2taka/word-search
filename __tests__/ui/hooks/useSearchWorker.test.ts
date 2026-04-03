@@ -113,12 +113,12 @@ describe('useSearchWorker', () => {
       mockWorker.simulateMessage({
         type: 'SEARCH_RESULT',
         requestId,
-        items: [{ id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'] }],
+        items: [{ id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'], score: 5 }],
         totalApprox: 1,
       });
     });
 
-    expect(result.current.items).toEqual([{ id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'] }]);
+    expect(result.current.items).toEqual([{ id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'], score: 5 }]);
     expect(result.current.totalApprox).toBe(1);
   });
 

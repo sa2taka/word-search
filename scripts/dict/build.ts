@@ -1,4 +1,5 @@
-import { writeFile, mkdir } from 'node:fs/promises';
+import { writeFile, mkdir, readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import type { DictMeta } from '../../src/shared/types';
@@ -9,6 +10,31 @@ import { wordnetSource } from './sources/wordnet';
 import { butadictSource } from './sources/butadict';
 
 const ALL_SOURCES: DictSourcePlugin[] = [jmdictSource, butadictSource, wordnetSource];
+
+const RANKING_TSV = 'dist-dict/word-ranking.tsv';
+
+async function loadScores(): Promise<Map<string, number>> {
+  const scores = new Map<string, number>();
+  if (!existsSync(RANKING_TSV)) {
+    console.log('  No ranking file found, all scores default to 1');
+    return scores;
+  }
+  const content = await readFile(RANKING_TSV, 'utf8');
+  const lines = content.trim().split('\n').slice(1);
+  for (const line of lines) {
+    if (!line) continue;
+    const parts = line.split('\t');
+    // rank, lang, word, bing_count, llm_raw, llm_final, ollama_label, effective_count
+    const lang = parts[1];
+    const word = parts[2];
+    const llmFinal = parseInt(parts[5]!);
+    if (lang && word && llmFinal >= 1 && llmFinal <= 10) {
+      scores.set(`${lang}\t${word}`, llmFinal);
+    }
+  }
+  console.log(`  Loaded ${scores.size.toLocaleString()} word scores from ${RANKING_TSV}`);
+  return scores;
+}
 
 function parseCli(): BuildOptions {
   const { values, positionals } = parseArgs({
@@ -53,9 +79,12 @@ async function main() {
   await mkdir(opts.outDir, { recursive: true });
 
   // Build database
+  console.log('\n--- Loading word scores ---');
+  const scores = await loadScores();
+
   console.log('\n--- Building SQLite database ---');
   const entries = chainSources(ALL_SOURCES, opts.cacheDir, opts.force);
-  const { dbBinary, sha256, entryCount } = await buildDatabase(entries);
+  const { dbBinary, sha256, entryCount } = await buildDatabase(entries, scores);
 
   // Write dict.db
   const dbPath = join(opts.outDir, 'dict.db');

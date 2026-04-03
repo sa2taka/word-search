@@ -67,6 +67,7 @@ function parseRows(
     word: row[idx['word']!] as string,
     pos: (row[idx['pos']!] ?? undefined) as string | undefined,
     sources: JSON.parse(row[idx['sources']!] as string) as string[],
+    score: (row[idx['score']!] ?? 1) as number,
   }));
 }
 
@@ -98,7 +99,7 @@ export function executeSearch(
 
     const limit = Math.trunc(params.limit);
     const offset = Math.trunc(params.offset);
-    const sql = `SELECT id, lang, word, pos, sources FROM entries WHERE ${where} ORDER BY word LIMIT ${limit} OFFSET ${offset}`;
+    const sql = `SELECT id, lang, word, pos, sources, score FROM entries WHERE ${where} ORDER BY score DESC, word LIMIT ${limit} OFFSET ${offset}`;
     const items = parseRows(
       db.exec(sql, [params.lang, pattern]),
     );

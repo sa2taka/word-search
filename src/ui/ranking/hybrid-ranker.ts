@@ -1,4 +1,11 @@
-import type { EntryRow, Lang, RankingInfo } from '../../shared/types';
+import type { EntryRow, Lang } from '../../shared/types';
+
+export interface RankingInfo {
+  combinedScore: number;
+  googleTotalResults?: number;
+  ollamaScore?: number;
+  reason?: string;
+}
 
 export interface HybridRankerConfig {
   enabled: boolean;

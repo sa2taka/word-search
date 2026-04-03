@@ -8,15 +8,17 @@ const CREATE_TABLE_SQL = `
     lang TEXT NOT NULL,
     word TEXT NOT NULL,
     pos TEXT,
-    sources TEXT NOT NULL
+    sources TEXT NOT NULL,
+    score INTEGER NOT NULL DEFAULT 1
   )
 `;
 
 const CREATE_INDEXES_SQL = [
   'CREATE INDEX idx_entries_lang_word ON entries(lang, word)',
+  'CREATE INDEX idx_entries_lang_score ON entries(lang, score DESC, word)',
 ];
 
-const INSERT_SQL = 'INSERT INTO entries (lang, word, pos, sources) VALUES (?, ?, ?, ?)';
+const INSERT_SQL = 'INSERT INTO entries (lang, word, pos, sources, score) VALUES (?, ?, ?, ?, ?)';
 
 const BATCH_SIZE = 10_000;
 
@@ -33,6 +35,7 @@ export interface BuildResult {
 
 export async function buildDatabase(
   entries: AsyncIterable<EntryInput>,
+  scores?: Map<string, number>,
 ): Promise<BuildResult> {
   // Phase 1: Collect and deduplicate in memory
   // Key: "lang\tword"
@@ -78,7 +81,8 @@ export async function buildDatabase(
   for (const [key, value] of merged) {
     const [lang, word] = key.split('\t');
     const sourcesJson = JSON.stringify([...value.sources].sort());
-    stmt.run([lang!, word!, value.pos ?? null, sourcesJson]);
+    const score = scores?.get(key) ?? 1;
+    stmt.run([lang!, word!, value.pos ?? null, sourcesJson, score]);
     count++;
 
     if (count % BATCH_SIZE === 0) {

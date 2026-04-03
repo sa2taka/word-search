@@ -21,7 +21,8 @@ async function createTestDb(entries: TestEntry[]): Promise<Database> {
       lang TEXT NOT NULL,
       word TEXT NOT NULL,
       pos TEXT,
-      sources TEXT NOT NULL
+      sources TEXT NOT NULL,
+      score INTEGER NOT NULL DEFAULT 1
     )
   `);
   const stmt = db.prepare(
@@ -299,6 +300,7 @@ describe('executeSearch', () => {
       word: 'たべる',
       pos: '動詞',
       sources: ['test'],
+      score: 1,
     });
     db.close();
   });

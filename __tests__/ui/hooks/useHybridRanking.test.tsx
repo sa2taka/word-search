@@ -15,6 +15,7 @@ function createEntry(id: number, word: string): EntryRow {
     lang: 'ja',
     word,
     sources: ['test'],
+    score: 5,
   };
 }
 

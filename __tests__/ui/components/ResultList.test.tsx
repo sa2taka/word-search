@@ -23,8 +23,8 @@ describe('ResultList', () => {
 
   test('when items are provided, should display each entry surface', () => {
     const items: EntryRow[] = [
-      { id: 1, lang: 'ja', word: 'ねこ', pos: '名詞', sources: ['jmdict'] },
-      { id: 2, lang: 'ja', word: 'いぬ', pos: '名詞', sources: ['jmdict'] },
+      { id: 1, lang: 'ja', word: 'ねこ', pos: '名詞', sources: ['jmdict'], score: 5 },
+      { id: 2, lang: 'ja', word: 'いぬ', pos: '名詞', sources: ['jmdict'], score: 5 },
     ];
 
     render(
@@ -45,7 +45,7 @@ describe('ResultList', () => {
 
   test('when there are more results, should enable next button', () => {
     const items: EntryRow[] = [
-      { id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'] },
+      { id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'], score: 5 },
     ];
 
     render(
@@ -65,7 +65,7 @@ describe('ResultList', () => {
 
   test('when on first page, should disable prev button', () => {
     const items: EntryRow[] = [
-      { id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'] },
+      { id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'], score: 5 },
     ];
 
     render(
@@ -87,7 +87,7 @@ describe('ResultList', () => {
     const user = userEvent.setup();
     const onPageChange = vi.fn();
     const items: EntryRow[] = [
-      { id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'] },
+      { id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'], score: 5 },
     ];
 
     render(
@@ -111,7 +111,7 @@ describe('ResultList', () => {
     const user = userEvent.setup();
     const onPageChange = vi.fn();
     const items: EntryRow[] = [
-      { id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'] },
+      { id: 1, lang: 'ja', word: 'ねこ', sources: ['jmdict'], score: 5 },
     ];
 
     render(

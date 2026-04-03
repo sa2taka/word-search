@@ -59,7 +59,14 @@ export async function extractZip(
   extractDir: string,
 ): Promise<string> {
   await mkdir(extractDir, { recursive: true });
-  await execFileAsync('unzip', ['-o', '-q', archivePath, '-d', extractDir]);
+  if (process.platform === 'win32') {
+    await execFileAsync('powershell', [
+      '-NoProfile', '-Command',
+      `Expand-Archive -Path '${archivePath}' -DestinationPath '${extractDir}' -Force`,
+    ]);
+  } else {
+    await execFileAsync('unzip', ['-o', '-q', archivePath, '-d', extractDir]);
+  }
   return extractDir;
 }
 

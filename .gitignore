@@ -30,8 +30,9 @@ test-results/
 # tmp
 tmp/
 
-# Dictionary build output
-dist-dict/
+# Dictionary build output (dict.db is tracked)
+dist-dict/*
+!dist-dict/dict.db
 
 # Wrangler
 .wrangler/

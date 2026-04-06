@@ -148,7 +148,7 @@ describe('useSearchWorker', () => {
       mockWorker.simulateMessage({
         type: 'SEARCH_RESULT',
         requestId: firstRequestId,
-        items: [{ id: 1, lang: 'ja', word: 'test001', sources: ['test'] }],
+        items: [{ id: 1, lang: 'ja', word: 'test001', sources: ['test'], score: 0 }],
         totalApprox: 55,
       });
     });
@@ -174,7 +174,7 @@ describe('useSearchWorker', () => {
       mockWorker.simulateMessage({
         type: 'SEARCH_RESULT',
         requestId: secondRequestId,
-        items: [{ id: 51, lang: 'ja', word: 'test051', sources: ['test'] }],
+        items: [{ id: 51, lang: 'ja', word: 'test051', sources: ['test'], score: 0 }],
       });
     });
 

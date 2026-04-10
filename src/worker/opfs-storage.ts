@@ -2,6 +2,7 @@ import { DB_FILENAME } from '../shared/constants';
 import type { DbStorage } from './storage';
 
 const VERSION_FILENAME = `${DB_FILENAME}.version`;
+const SHA256_FILENAME = `${DB_FILENAME}.sha256`;
 
 export class OpfsStorage implements DbStorage {
   private dir: FileSystemDirectoryHandle | null = null;
@@ -70,6 +71,34 @@ export class OpfsStorage implements DbStorage {
     try {
       const dir = await this.getDir();
       await dir.removeEntry(VERSION_FILENAME);
+    } catch {
+      // noop
+    }
+  }
+
+  async readSha256(): Promise<string | null> {
+    try {
+      const dir = await this.getDir();
+      const handle = await dir.getFileHandle(SHA256_FILENAME);
+      const file = await handle.getFile();
+      return await file.text();
+    } catch {
+      return null;
+    }
+  }
+
+  async writeSha256(sha256: string): Promise<void> {
+    const dir = await this.getDir();
+    const handle = await dir.getFileHandle(SHA256_FILENAME, { create: true });
+    const writable = await handle.createWritable();
+    await writable.write(sha256);
+    await writable.close();
+  }
+
+  async removeSha256(): Promise<void> {
+    try {
+      const dir = await this.getDir();
+      await dir.removeEntry(SHA256_FILENAME);
     } catch {
       // noop
     }

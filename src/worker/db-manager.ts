@@ -45,6 +45,7 @@ export function createDbManager(deps: DbManagerDeps) {
 
     await deps.storage.write(data);
     await deps.storage.writeVersion(meta.version);
+    await deps.storage.writeSha256(meta.sha256);
     return data;
   }
 
@@ -55,6 +56,7 @@ export function createDbManager(deps: DbManagerDeps) {
 
     async init(metaUrl: string, post: PostResponse): Promise<void> {
       const localVersion = await deps.storage.readVersion();
+      const localSha256 = await deps.storage.readSha256();
       const hasLocal = localVersion !== null && (await deps.storage.exists());
 
       let meta: DictMeta | null = null;
@@ -73,7 +75,11 @@ export function createDbManager(deps: DbManagerDeps) {
         );
       }
 
-      if (hasLocal && localVersion === meta.version) {
+      const isCacheValid = hasLocal
+        && localVersion === meta.version
+        && localSha256 === meta.sha256;
+
+      if (isCacheValid) {
         const data = await deps.storage.read();
         await openAndSetDb(data);
         post({ type: 'STATUS', status: 'ready', version: localVersion, sources: meta.sources });
@@ -89,8 +95,9 @@ export function createDbManager(deps: DbManagerDeps) {
     async checkUpdate(metaUrl: string, post: PostResponse): Promise<void> {
       const meta = await deps.fetchMeta(metaUrl);
       const localVersion = await deps.storage.readVersion();
+      const localSha256 = await deps.storage.readSha256();
 
-      if (localVersion !== meta.version) {
+      if (localVersion !== meta.version || localSha256 !== meta.sha256) {
         post({ type: 'STATUS', status: 'updatable', version: localVersion ?? undefined });
         return;
       }
@@ -113,6 +120,7 @@ export function createDbManager(deps: DbManagerDeps) {
       }
       await deps.storage.remove();
       await deps.storage.removeVersion();
+      await deps.storage.removeSha256();
       post({ type: 'STATUS', status: 'idle' });
     },
   };

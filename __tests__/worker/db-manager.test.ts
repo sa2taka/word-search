@@ -8,6 +8,7 @@ import { WorkerError } from '../../src/worker/worker-error';
 function createInMemoryStorage(): DbStorage {
   const files = new Map<string, Uint8Array>();
   let version: string | null = null;
+  let sha256: string | null = null;
 
   return {
     exists: async () => files.has('db'),
@@ -28,6 +29,13 @@ function createInMemoryStorage(): DbStorage {
     },
     removeVersion: async () => {
       version = null;
+    },
+    readSha256: async () => sha256,
+    writeSha256: async (v) => {
+      sha256 = v;
+    },
+    removeSha256: async () => {
+      sha256 = null;
     },
   };
 }
@@ -68,10 +76,11 @@ function collectResponses(): {
 
 describe('DbManager', () => {
   describe('init', () => {
-    test('when local DB exists with matching version, should open local DB and post ready', async () => {
+    test('when local DB exists with matching version and sha256, should open local DB and post ready', async () => {
       const storage = createInMemoryStorage();
       await storage.write(new Uint8Array([10, 20, 30]));
       await storage.writeVersion('2.0');
+      await storage.writeSha256('abc123');
 
       const deps = createMockDeps({ storage });
       const manager = createDbManager(deps);
@@ -155,6 +164,7 @@ describe('DbManager', () => {
       const storage = createInMemoryStorage();
       await storage.write(new Uint8Array([1]));
       await storage.writeVersion('1.0');
+      await storage.writeSha256('abc123');
 
       const deps = createMockDeps({ storage });
       const manager = createDbManager(deps);
@@ -164,6 +174,50 @@ describe('DbManager', () => {
 
       expect(deps.downloadDb).toHaveBeenCalled();
       expect(await storage.readVersion()).toBe('2.0');
+
+      const readyResponse = responses.find(
+        (r) => r.type === 'STATUS' && r.status === 'ready',
+      );
+      expect(readyResponse).toEqual(
+        expect.objectContaining({ type: 'STATUS', status: 'ready', version: '2.0' }),
+      );
+    });
+
+    test('when local DB version matches but sha256 differs, should download new DB', async () => {
+      const storage = createInMemoryStorage();
+      await storage.write(new Uint8Array([1]));
+      await storage.writeVersion('2.0');
+      await storage.writeSha256('old-hash');
+
+      const deps = createMockDeps({ storage });
+      const manager = createDbManager(deps);
+      const { responses, postResponse } = collectResponses();
+
+      await manager.init('/meta.json', postResponse);
+
+      expect(deps.downloadDb).toHaveBeenCalled();
+      expect(await storage.readSha256()).toBe('abc123');
+
+      const readyResponse = responses.find(
+        (r) => r.type === 'STATUS' && r.status === 'ready',
+      );
+      expect(readyResponse).toEqual(
+        expect.objectContaining({ type: 'STATUS', status: 'ready', version: '2.0' }),
+      );
+    });
+
+    test('when local DB has no stored sha256, should download new DB', async () => {
+      const storage = createInMemoryStorage();
+      await storage.write(new Uint8Array([1]));
+      await storage.writeVersion('2.0');
+
+      const deps = createMockDeps({ storage });
+      const manager = createDbManager(deps);
+      const { responses, postResponse } = collectResponses();
+
+      await manager.init('/meta.json', postResponse);
+
+      expect(deps.downloadDb).toHaveBeenCalled();
 
       const readyResponse = responses.find(
         (r) => r.type === 'STATUS' && r.status === 'ready',
@@ -192,9 +246,10 @@ describe('DbManager', () => {
       });
     });
 
-    test('when versions match, should post ready status', async () => {
+    test('when version and sha256 both match, should post ready status', async () => {
       const storage = createInMemoryStorage();
       await storage.writeVersion('2.0');
+      await storage.writeSha256('abc123');
 
       const deps = createMockDeps({ storage });
       const manager = createDbManager(deps);

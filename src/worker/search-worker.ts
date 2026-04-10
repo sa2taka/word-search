@@ -9,7 +9,7 @@ import { WorkerError } from './worker-error';
 const cancelledRequests = new Set<string>();
 
 async function fetchMeta(url: string): Promise<DictMeta> {
-  const resp = await fetch(url);
+  const resp = await fetch(url, { cache: 'no-cache' });
   if (!resp.ok) {
     throw new WorkerError(
       'META_FETCH_FAILED',

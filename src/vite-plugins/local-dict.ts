@@ -17,7 +17,8 @@ export function localDict(dictDir = 'dist-dict'): Plugin {
   const resolvedDir = resolve(dictDir);
 
   function handler(req: IncomingMessage, res: ServerResponse, next: () => void) {
-    const mapping = ROUTE_MAP[req.url ?? ''];
+    const pathname = new URL(req.url ?? '', 'http://localhost').pathname;
+    const mapping = ROUTE_MAP[pathname];
     if (!mapping) return next();
 
     const filePath = resolve(resolvedDir, mapping.file);

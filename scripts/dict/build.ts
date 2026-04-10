@@ -92,9 +92,10 @@ async function main() {
   console.log(`\nWrote: ${dbPath} (${(dbBinary.byteLength / 1024 / 1024).toFixed(1)} MB)`);
 
   // Generate meta.json
+  const version = new Date().toISOString().slice(0, 10).replace(/-/g, '.');
   const meta: DictMeta = {
-    version: new Date().toISOString().slice(0, 10).replace(/-/g, '.'),
-    url: '/dict.sqlite',
+    version,
+    url: `/dict.sqlite?v=${version}`,
     sha256,
     bytes: dbBinary.byteLength,
     created_at: new Date().toISOString(),

@@ -14,12 +14,12 @@ describe('initialTalkToRegex', () => {
     expect(initialTalkToRegex('tdn')).toBe('^[たちつてと][だぢづでど][なにぬねの]$');
   });
 
-  test('vowel A → wildcard .', () => {
-    expect(initialTalkToRegex('A')).toBe('^.$');
+  test('vowel A → あ', () => {
+    expect(initialTalkToRegex('A')).toBe('^あ$');
   });
 
-  test('all vowels AIUEO → wildcards', () => {
-    expect(initialTalkToRegex('AIUEO')).toBe('^.....$');
+  test('all vowels AIUEO → specific hiragana', () => {
+    expect(initialTalkToRegex('AIUEO')).toBe('^あいうえお$');
   });
 
   test('? → wildcard .', () => {
@@ -60,6 +60,10 @@ describe('initialTalkToRegex', () => {
     for (const [input, expected] of cases) {
       expect(initialTalkToRegex(input)).toBe(expected);
     }
+  });
+
+  test('OKSI → お + か行 + さ行 + い (matches おかしい)', () => {
+    expect(initialTalkToRegex('OKSI')).toBe('^お[かきくけこ][さしすせそ]い$');
   });
 
   test('empty input → matches empty string only', () => {

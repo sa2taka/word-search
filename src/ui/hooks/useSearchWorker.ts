@@ -118,6 +118,7 @@ export function useSearchWorker(metaUrl: string): UseSearchWorkerReturn {
           break;
         case 'ERROR':
           setError({ code: data.code, message: data.message });
+          setSearching(false);
           if (!data.requestId) {
             setDbStatus('error');
           }

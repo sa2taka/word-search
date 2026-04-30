@@ -4,9 +4,22 @@ import { WorkerError } from './worker-error';
 import { normalizeWord } from '../shared/normalize';
 
 const MAX_INPUT_LENGTH = 10;
-const CANDIDATE_FETCH_LIMIT = 5000;
 
-function parseRows(
+type CandidateEntry = { id: number; word: string };
+
+function parseCandidateRows(
+  result: { columns: string[]; values: unknown[][] }[],
+): CandidateEntry[] {
+  if (!result[0]) return [];
+  const { columns, values } = result[0];
+  const idx = Object.fromEntries(columns.map((col, i) => [col, i]));
+  return values.map((row) => ({
+    id: row[idx['id']!] as number,
+    word: row[idx['word']!] as string,
+  }));
+}
+
+function parseDetailRows(
   result: { columns: string[]; values: unknown[][] }[],
 ): EntryRow[] {
   if (!result[0]) return [];
@@ -94,17 +107,18 @@ export function executeWordSplit(
   const inputMs = charMultiset(normalized);
   const inputLen = normalized.length;
 
-  // 入力と同じ長さ以下の単語を全件取得（最大 CANDIDATE_FETCH_LIMIT 件）
-  const sql = `SELECT id, lang, word, pos, sources, score FROM entries WHERE lang = ? AND length(word) >= 1 AND length(word) <= ${inputLen - 1} ORDER BY score DESC, word LIMIT ${CANDIDATE_FETCH_LIMIT}`;
-  const candidates = parseRows(db.exec(sql, [params.lang]));
+  // Phase 1: id と word だけ取得。LIMIT なしで全候補を対象にする。
+  // sources/pos の JSON デシリアライズを省くことで数万件でも高速に処理できる。
+  const candidateSql = `SELECT id, word FROM entries WHERE lang = ? AND length(word) >= 1 AND length(word) <= ${inputLen - 1} ORDER BY score DESC, word`;
+  const candidates = parseCandidateRows(db.exec(candidateSql, [params.lang]));
 
-  // word → マルチセット キャッシュ + キー→[EntryRow] マップ
-  const keyToEntries = new Map<string, EntryRow[]>();
-  const wordToMs = new Map<number, Map<string, number>>();
+  // word → マルチセット キャッシュ + キー→[CandidateEntry] マップ
+  const keyToEntries = new Map<string, CandidateEntry[]>();
+  const idToMs = new Map<number, Map<string, number>>();
 
   for (const entry of candidates) {
     const ms = charMultiset(entry.word);
-    wordToMs.set(entry.id, ms);
+    idToMs.set(entry.id, ms);
     const key = multisetKey(ms);
     const existing = keyToEntries.get(key);
     if (existing) {
@@ -114,26 +128,25 @@ export function executeWordSplit(
     }
   }
 
-  const pairs: EntryPair[] = [];
+  const pairIds: [number, number][] = [];
   const seenPairs = new Set<string>();
   const limit = Math.trunc(params.limit);
 
   for (const entry of candidates) {
-    if (pairs.length >= limit) break;
+    if (pairIds.length >= limit) break;
 
-    const ms = wordToMs.get(entry.id);
+    const ms = idToMs.get(entry.id);
     if (!ms) continue;
 
     const remaining = subtractMultiset(inputMs, ms);
     if (!remaining || remaining.size === 0) continue;
 
-    // 残りの文字が空でない → 残りと一致する単語を探す
     const remainingKey = multisetKey(remaining);
     const matches = keyToEntries.get(remainingKey);
     if (!matches) continue;
 
     for (const other of matches) {
-      if (pairs.length >= limit) break;
+      if (pairIds.length >= limit) break;
 
       // 重複排除: IDの小さい方を先にして正規化
       const pairKey =
@@ -143,9 +156,28 @@ export function executeWordSplit(
       if (seenPairs.has(pairKey)) continue;
       seenPairs.add(pairKey);
 
-      pairs.push([entry, other]);
+      pairIds.push([entry.id, other.id]);
     }
   }
+
+  if (pairIds.length === 0) {
+    return { pairs: [] };
+  }
+
+  // Phase 2: マッチしたペアの ID のみ詳細取得（sources/pos を含む完全な EntryRow）
+  const allIds = [...new Set(pairIds.flat())];
+  const detailSql = `SELECT id, lang, word, pos, sources, score FROM entries WHERE id IN (${allIds.join(',')})`;
+  const detailRows = parseDetailRows(db.exec(detailSql));
+  const idToEntry = new Map(detailRows.map((e) => [e.id, e]));
+
+  const pairs: EntryPair[] = pairIds
+    .map(([aId, bId]) => {
+      const a = idToEntry.get(aId);
+      const b = idToEntry.get(bId);
+      if (!a || !b) return null;
+      return [a, b] as EntryPair;
+    })
+    .filter((p): p is EntryPair => p !== null);
 
   return { pairs };
 }

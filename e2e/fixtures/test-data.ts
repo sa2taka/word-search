@@ -34,6 +34,13 @@ const jaBaseWords: TestEntry[] = [
   { lang: 'ja', word: 'かんじ', pos: '名詞', score: 9 },
   // クロス検索用 (は112 + 12がみ → はいいろ + いろがみ)
   { lang: 'ja', word: 'いろがみ', pos: '名詞', score: 8 }, // い+ろ+が+み (12がみ型)
+  // 母音検索用: aaai パターン (なまあし, わたがし)
+  { lang: 'ja', word: 'なまあし', pos: '名詞', score: 6 }, // な(a)ま(a)あ(a)し(i) = 'aaai'
+  { lang: 'ja', word: 'わたがし', pos: '名詞', score: 6 }, // わ(a)た(a)が(a)し(i) = 'aaai'
+  // 母音検索用: aaa パターン (さかな, たなか は既存)
+  { lang: 'ja', word: 'さかな', pos: '名詞', score: 9 },   // さ(a)か(a)な(a) = 'aaa'
+  // 母音検索用: au パターン (なつ は既存)
+  { lang: 'ja', word: 'はる', pos: '名詞', score: 9 },     // は(a)る(u) = 'au'
 ];
 
 const enBaseWords: TestEntry[] = [

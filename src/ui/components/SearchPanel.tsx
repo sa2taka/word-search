@@ -1,5 +1,6 @@
 import type { SearchMode, Lang } from '../../shared/types';
 import { normalizeWord } from '../../shared/normalize';
+import { toVowelPattern } from '../../shared/vowel-search';
 
 interface SearchPanelProps {
   query: string;
@@ -17,6 +18,7 @@ const MODE_HELPERS: Record<SearchMode, string> = {
   regex: '正規表現で検索（例: ^.ね.$ → いねか）',
   initial: '子音のイニシャルからかな行を展開（例: NT → な行+た行 = なつ）',
   'number-pattern': '同じ数字=同じ文字（例: は112 → はいいろ、112323 → ききかいかい）',
+  vowel: '同じ母音パターンの単語を検索（例: なまあし → aaai → わたがし）',
 };
 
 export function SearchPanel({
@@ -27,8 +29,12 @@ export function SearchPanel({
   onModeChange,
   onLangChange,
 }: SearchPanelProps) {
-  const normalized = query.trim() ? normalizeWord(query.trim()) : '';
-  const showNormalized = normalized !== '' && normalized !== query.trim();
+  const trimmed = query.trim();
+  const hint =
+    mode === 'vowel'
+      ? (trimmed ? toVowelPattern(trimmed) : '')
+      : (trimmed ? normalizeWord(trimmed) : '');
+  const showHint = hint !== '' && hint !== trimmed;
 
   return (
     <div className="search-panel">
@@ -41,8 +47,8 @@ export function SearchPanel({
           placeholder={mode === 'wildcard' ? 'は?い?' : 'Search words...'}
           aria-label="Search"
         />
-        {showNormalized && (
-          <span className="search-panel__normalized">{normalized}</span>
+        {showHint && (
+          <span className="search-panel__normalized">{hint}</span>
         )}
       </div>
       <div className="search-panel__controls">
@@ -62,6 +68,7 @@ export function SearchPanel({
             <option value="prefix">Prefix</option>
             <option value="initial">イニシャルトーク</option>
             <option value="number-pattern">数字パターン</option>
+            <option value="vowel">母音検索</option>
           </select>
         </div>
         <div className="search-panel__control-group">

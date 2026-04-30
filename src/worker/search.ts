@@ -6,6 +6,7 @@ import { setRegexpDeadline, clearRegexpDeadline } from './regexp-udf';
 import { normalizeWord } from '../shared/normalize';
 import { initialTalkToRegex } from '../shared/initial-talk';
 import { buildNumberPatternRegex } from '../shared/number-pattern';
+import { buildVowelSearchRegex } from '../shared/vowel-search';
 
 function escapeLike(query: string): string {
   return query.replace(/[%_\\]/g, '\\$&');
@@ -16,6 +17,7 @@ function buildWhereSql(mode: SearchMode): string {
     case 'regex':
     case 'initial':
     case 'number-pattern':
+    case 'vowel':
       return 'lang = ? AND regexp(?, word)';
     case 'wildcard':
     case 'contains':
@@ -43,7 +45,7 @@ function buildWildcardPattern(query: string): string {
   return result;
 }
 
-function buildPattern(mode: SearchMode, query: string): string {
+function buildPattern(mode: SearchMode, query: string, lang: Lang = 'ja'): string {
   const normalized = normalizeWord(query);
   switch (mode) {
     case 'wildcard':
@@ -58,6 +60,11 @@ function buildPattern(mode: SearchMode, query: string): string {
       return initialTalkToRegex(query);
     case 'number-pattern':
       return buildNumberPatternRegex(query);
+    case 'vowel': {
+      const vowelRegex = buildVowelSearchRegex(query, lang);
+      if (!vowelRegex) throw new WorkerError('QUERY_EMPTY', '入力から母音が見つかりません');
+      return vowelRegex;
+    }
   }
 }
 
@@ -89,10 +96,10 @@ export function executeSearch(
     offset: number;
   },
 ): { items: EntryRow[]; totalApprox?: number } {
-  const isRegexLike = params.mode === 'regex' || params.mode === 'initial' || params.mode === 'number-pattern';
+  const isRegexLike = params.mode === 'regex' || params.mode === 'initial' || params.mode === 'number-pattern' || params.mode === 'vowel';
 
   if (isRegexLike) {
-    const pattern = buildPattern(params.mode, params.query);
+    const pattern = buildPattern(params.mode, params.query, params.lang);
     try {
       new RegExp(pattern);
     } catch {
@@ -106,7 +113,7 @@ export function executeSearch(
 
   try {
     const where = buildWhereSql(params.mode);
-    const pattern = buildPattern(params.mode, params.query);
+    const pattern = buildPattern(params.mode, params.query, params.lang);
 
     const limit = Math.trunc(params.limit);
     const offset = Math.trunc(params.offset);

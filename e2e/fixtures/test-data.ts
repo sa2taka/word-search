@@ -17,6 +17,23 @@ const jaBaseWords: TestEntry[] = [
   { lang: 'ja', word: 'はしる', pos: '動詞', score: 9 },
   { lang: 'ja', word: 'うつくしい', pos: '形容詞', score: 7 },
   { lang: 'ja', word: 'おおきい', pos: '形容詞', score: 9 },
+  // TDN検索用 (た行・だ行・な行)
+  { lang: 'ja', word: 'たなか', pos: '名詞', score: 8 },   // T=た, N=な, K=か
+  { lang: 'ja', word: 'どなべ', pos: '名詞', score: 6 },   // D=だ行, N=な行, B=ば行
+  { lang: 'ja', word: 'なつ', pos: '名詞', score: 7 },     // N=な行, T=た行
+  { lang: 'ja', word: 'にく', pos: '名詞', score: 7 },     // N=な行, K=か行
+  { lang: 'ja', word: 'はた', pos: '名詞', score: 7 },     // は+T(た行): mixed kana+consonant test
+  // 数字パターン検索用 (は112 → はいいろ, か111き → かたたたき)
+  { lang: 'ja', word: 'はいいろ', pos: '名詞', score: 8 }, // は+い+い+ろ (は112型)
+  { lang: 'ja', word: 'かたたたき', pos: '名詞', score: 7 }, // か+た+た+た+き (か111き型)
+  { lang: 'ja', word: 'ききかいかい', pos: '名詞', score: 6 }, // 112323型
+  // 単語分割用 (ごじ + さんじ = ごんじじさ)
+  { lang: 'ja', word: 'ごじ', pos: '名詞', score: 8 },
+  { lang: 'ja', word: 'さんじ', pos: '名詞', score: 8 },
+  { lang: 'ja', word: 'じかん', pos: '名詞', score: 9 },
+  { lang: 'ja', word: 'かんじ', pos: '名詞', score: 9 },
+  // クロス検索用 (は112 + 12がみ → はいいろ + いろがみ)
+  { lang: 'ja', word: 'いろがみ', pos: '名詞', score: 8 }, // い+ろ+が+み (12がみ型)
 ];
 
 const enBaseWords: TestEntry[] = [
@@ -30,6 +47,11 @@ const enBaseWords: TestEntry[] = [
   { lang: 'en', word: 'running', pos: 'noun' },
   { lang: 'en', word: 'runner', pos: 'noun' },
   { lang: 'en', word: 'sunset', pos: 'noun' },
+  // 数字パターン: aabb → 1122パターン
+  { lang: 'en', word: 'aabb', pos: 'noun' },
+  // 単語分割用: cat + dog = catdog (アナグラム的に acdgot)
+  { lang: 'en', word: 'sun', pos: 'noun' },
+  { lang: 'en', word: 'set', pos: 'noun' },
 ];
 
 function generatePrefixTestWords(lang: 'ja' | 'en', prefix: string, count: number): TestEntry[] {

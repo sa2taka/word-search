@@ -13,6 +13,8 @@ function createStubHandlers(
     CHECK_UPDATE: vi.fn(),
     UPDATE_DB: vi.fn(),
     RESET_DB: vi.fn(),
+    WORD_SPLIT: vi.fn(),
+    CROSS_SEARCH: vi.fn(),
     ...overrides,
   };
 }

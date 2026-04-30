@@ -15,6 +15,8 @@ const MODE_HELPERS: Record<SearchMode, string> = {
   contains: '入力した文字列を含む単語を検索',
   prefix: '入力した文字列で始まる単語を検索',
   regex: '正規表現で検索（例: ^.ね.$ → いねか）',
+  initial: '子音のイニシャルからかな行を展開（例: NT → な行+た行 = なつ）',
+  'number-pattern': '同じ数字=同じ文字（例: は112 → はいいろ、112323 → ききかいかい）',
 };
 
 export function SearchPanel({
@@ -58,6 +60,8 @@ export function SearchPanel({
             <option value="regex">Regex</option>
             <option value="contains">Contains</option>
             <option value="prefix">Prefix</option>
+            <option value="initial">イニシャルトーク</option>
+            <option value="number-pattern">数字パターン</option>
           </select>
         </div>
         <div className="search-panel__control-group">

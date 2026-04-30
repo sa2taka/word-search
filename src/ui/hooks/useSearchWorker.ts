@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   DbStatus,
+  EntryPair,
   EntryRow,
   ErrorCode,
   Lang,
@@ -30,11 +31,15 @@ interface UseSearchWorkerReturn {
   sources: import('../../shared/types').DictSource[];
   items: EntryRow[];
   totalApprox: number;
+  wordSplitPairs: EntryPair[];
+  crossSearchPairs: EntryPair[];
   error: WorkerError | null;
   searching: boolean;
   retry: () => void;
   search: (params: SearchParams) => void;
   cancel: () => void;
+  wordSplit: (params: { lang: Lang; query: string; limit: number }) => void;
+  crossSearch: (params: { lang: Lang; query1: string; query2: string; limit: number }) => void;
   checkUpdate: (metaUrl: string) => void;
   updateDb: (metaUrl: string) => void;
   resetDb: () => void;
@@ -51,6 +56,8 @@ export function useSearchWorker(metaUrl: string): UseSearchWorkerReturn {
   const [sources, setSources] = useState<import('../../shared/types').DictSource[]>([]);
   const [items, setItems] = useState<EntryRow[]>([]);
   const [totalApprox, setTotalApprox] = useState(0);
+  const [wordSplitPairs, setWordSplitPairs] = useState<EntryPair[]>([]);
+  const [crossSearchPairs, setCrossSearchPairs] = useState<EntryPair[]>([]);
   const [error, setError] = useState<WorkerError | null>(null);
   const [searching, setSearching] = useState(false);
 
@@ -97,6 +104,18 @@ export function useSearchWorker(metaUrl: string): UseSearchWorkerReturn {
             setSearching(false);
           }
           break;
+        case 'WORD_SPLIT_RESULT':
+          if (data.requestId === requestIdRef.current) {
+            setWordSplitPairs(data.pairs);
+            setSearching(false);
+          }
+          break;
+        case 'CROSS_SEARCH_RESULT':
+          if (data.requestId === requestIdRef.current) {
+            setCrossSearchPairs(data.pairs);
+            setSearching(false);
+          }
+          break;
         case 'ERROR':
           setError({ code: data.code, message: data.message });
           if (!data.requestId) {
@@ -126,7 +145,31 @@ export function useSearchWorker(metaUrl: string): UseSearchWorkerReturn {
       const requestId = crypto.randomUUID();
       requestIdRef.current = requestId;
       setSearching(true);
+      setWordSplitPairs([]);
       post({ type: 'SEARCH', ...params, requestId });
+    },
+    [post],
+  );
+
+  const wordSplit = useCallback(
+    (params: { lang: Lang; query: string; limit: number }) => {
+      const requestId = crypto.randomUUID();
+      requestIdRef.current = requestId;
+      setSearching(true);
+      setItems([]);
+      post({ type: 'WORD_SPLIT', ...params, requestId });
+    },
+    [post],
+  );
+
+  const crossSearch = useCallback(
+    (params: { lang: Lang; query1: string; query2: string; limit: number }) => {
+      const requestId = crypto.randomUUID();
+      requestIdRef.current = requestId;
+      setSearching(true);
+      setItems([]);
+      setWordSplitPairs([]);
+      post({ type: 'CROSS_SEARCH', ...params, requestId });
     },
     [post],
   );
@@ -162,12 +205,16 @@ export function useSearchWorker(metaUrl: string): UseSearchWorkerReturn {
     progress,
     items,
     totalApprox,
+    wordSplitPairs,
+    crossSearchPairs,
     sources,
     error,
     searching,
     retry,
     search,
     cancel,
+    wordSplit,
+    crossSearch,
     checkUpdate,
     updateDb,
     resetDb,

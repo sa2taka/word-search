@@ -4,6 +4,8 @@ import { REGEX_TIMEOUT_MS } from '../shared/constants';
 import { WorkerError } from './worker-error';
 import { setRegexpDeadline, clearRegexpDeadline } from './regexp-udf';
 import { normalizeWord } from '../shared/normalize';
+import { initialTalkToRegex } from '../shared/initial-talk';
+import { buildNumberPatternRegex } from '../shared/number-pattern';
 
 function escapeLike(query: string): string {
   return query.replace(/[%_\\]/g, '\\$&');
@@ -12,6 +14,8 @@ function escapeLike(query: string): string {
 function buildWhereSql(mode: SearchMode): string {
   switch (mode) {
     case 'regex':
+    case 'initial':
+    case 'number-pattern':
       return 'lang = ? AND regexp(?, word)';
     case 'wildcard':
     case 'contains':
@@ -50,6 +54,10 @@ function buildPattern(mode: SearchMode, query: string): string {
       return `${escapeLike(normalized)}%`;
     case 'regex':
       return normalized;
+    case 'initial':
+      return initialTalkToRegex(query);
+    case 'number-pattern':
+      return buildNumberPatternRegex(query);
   }
 }
 
@@ -81,13 +89,16 @@ export function executeSearch(
     offset: number;
   },
 ): { items: EntryRow[]; totalApprox?: number } {
-  if (params.mode === 'regex') {
+  const isRegexLike = params.mode === 'regex' || params.mode === 'initial' || params.mode === 'number-pattern';
+
+  if (isRegexLike) {
+    const pattern = buildPattern(params.mode, params.query);
     try {
-      new RegExp(params.query);
+      new RegExp(pattern);
     } catch {
       throw new WorkerError(
         'REGEX_INVALID',
-        `Invalid regex pattern: ${params.query}`,
+        `Invalid regex pattern: ${pattern}`,
       );
     }
     setRegexpDeadline(Date.now() + REGEX_TIMEOUT_MS);
@@ -113,7 +124,7 @@ export function executeSearch(
 
     return { items, totalApprox };
   } finally {
-    if (params.mode === 'regex') {
+    if (isRegexLike) {
       clearRegexpDeadline();
     }
   }

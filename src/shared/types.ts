@@ -1,4 +1,4 @@
-export type SearchMode = 'wildcard' | 'contains' | 'prefix' | 'regex';
+export type SearchMode = 'wildcard' | 'contains' | 'prefix' | 'regex' | 'initial' | 'number-pattern';
 export type DbStatus = 'idle' | 'downloading' | 'ready' | 'error' | 'updatable';
 export type Lang = 'ja' | 'en';
 
@@ -44,7 +44,24 @@ export type WorkerRequest =
   | { type: 'CANCEL'; requestId: string }
   | { type: 'CHECK_UPDATE'; metaUrl: string }
   | { type: 'UPDATE_DB'; metaUrl: string }
-  | { type: 'RESET_DB' };
+  | { type: 'RESET_DB' }
+  | {
+      type: 'WORD_SPLIT';
+      lang: Lang;
+      query: string;
+      limit: number;
+      requestId: string;
+    }
+  | {
+      type: 'CROSS_SEARCH';
+      lang: Lang;
+      query1: string;
+      query2: string;
+      limit: number;
+      requestId: string;
+    };
+
+export type EntryPair = [EntryRow, EntryRow];
 
 export type WorkerResponse =
   | {
@@ -62,6 +79,16 @@ export type WorkerResponse =
       items: EntryRow[];
     }
   | {
+      type: 'WORD_SPLIT_RESULT';
+      requestId: string;
+      pairs: EntryPair[];
+    }
+  | {
+      type: 'CROSS_SEARCH_RESULT';
+      requestId: string;
+      pairs: EntryPair[];
+    }
+  | {
       type: 'ERROR';
       requestId?: string;
       code: ErrorCode;
@@ -74,4 +101,6 @@ export type ErrorCode =
   | 'DB_OPEN_FAILED'
   | 'REGEX_INVALID'
   | 'SQL_ERROR'
-  | 'SEARCH_TIMEOUT';
+  | 'SEARCH_TIMEOUT'
+  | 'WORD_TOO_LONG'
+  | 'QUERY_EMPTY';

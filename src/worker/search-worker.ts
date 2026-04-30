@@ -4,6 +4,8 @@ import { createDbManager } from './db-manager';
 import { initSqlite, openDb } from './db';
 import { OpfsStorage } from './opfs-storage';
 import { executeSearch } from './search';
+import { executeWordSplit } from './word-split';
+import { executeCrossSearch } from './cross-search';
 import { WorkerError } from './worker-error';
 
 const cancelledRequests = new Set<string>();
@@ -103,6 +105,63 @@ const dispatch = createDispatcher(
     },
     CANCEL: (req) => {
       cancelledRequests.add(req.requestId);
+    },
+    WORD_SPLIT: async (req, post) => {
+      if (cancelledRequests.has(req.requestId)) {
+        cancelledRequests.delete(req.requestId);
+        return;
+      }
+
+      const db = manager.getDb();
+      if (!db) {
+        throw new WorkerError('DB_OPEN_FAILED', 'Database is not initialized');
+      }
+
+      const result = executeWordSplit(db, {
+        lang: req.lang,
+        query: req.query,
+        limit: req.limit,
+      });
+
+      if (cancelledRequests.has(req.requestId)) {
+        cancelledRequests.delete(req.requestId);
+        return;
+      }
+
+      post({
+        type: 'WORD_SPLIT_RESULT',
+        requestId: req.requestId,
+        pairs: result.pairs,
+      });
+    },
+    CROSS_SEARCH: async (req, post) => {
+      if (cancelledRequests.has(req.requestId)) {
+        cancelledRequests.delete(req.requestId);
+        return;
+      }
+
+      const db = manager.getDb();
+      if (!db) {
+        throw new WorkerError('DB_OPEN_FAILED', 'Database is not initialized');
+      }
+
+      const result = executeCrossSearch(db, {
+        lang: req.lang,
+        query1: req.query1,
+        query2: req.query2,
+        limit: req.limit,
+      });
+
+      if (cancelledRequests.has(req.requestId)) {
+        cancelledRequests.delete(req.requestId);
+        return;
+      }
+
+      post({
+        type: 'CROSS_SEARCH_RESULT',
+        requestId: req.requestId,
+        pairs: result.pairs,
+      });
     },
     CHECK_UPDATE: async (req, post) => {
       await manager.checkUpdate(req.metaUrl, post);

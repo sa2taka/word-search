@@ -1,5 +1,6 @@
 import type { SearchMode, Lang } from '../../shared/types';
 import { normalizeWord } from '../../shared/normalize';
+import { buildAnagramKey } from '../../shared/anagram';
 import { toVowelPattern } from '../../shared/vowel-search';
 
 interface SearchPanelProps {
@@ -13,6 +14,7 @@ interface SearchPanelProps {
 
 const MODE_HELPERS: Record<SearchMode, string> = {
   wildcard: '? で任意の1文字にマッチ（例: は?い? → はいいろ）',
+  anagram: '入力した文字を並べ替えて作れる単語だけを検索（例: tac → act, cat）',
   contains: '入力した文字列を含む単語を検索',
   prefix: '入力した文字列で始まる単語を検索',
   regex: '正規表現で検索（例: ^.ね.$ → いねか）',
@@ -31,9 +33,11 @@ export function SearchPanel({
 }: SearchPanelProps) {
   const trimmed = query.trim();
   const hint =
-    mode === 'vowel'
-      ? (trimmed ? toVowelPattern(trimmed) : '')
-      : (trimmed ? normalizeWord(trimmed) : '');
+    mode === 'anagram'
+      ? (trimmed ? buildAnagramKey(trimmed) : '')
+      : mode === 'vowel'
+        ? (trimmed ? toVowelPattern(trimmed) : '')
+        : (trimmed ? normalizeWord(trimmed) : '');
   const showHint = hint !== '' && hint !== trimmed;
 
   return (
@@ -44,7 +48,7 @@ export function SearchPanel({
           className="search-panel__input"
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
-          placeholder={mode === 'wildcard' ? 'は?い?' : 'Search words...'}
+          placeholder={mode === 'wildcard' ? 'は?い?' : mode === 'anagram' ? 'ねこ / tac' : 'Search words...'}
           aria-label="Search"
         />
         {showHint && (
@@ -63,6 +67,7 @@ export function SearchPanel({
             onChange={(e) => onModeChange(e.target.value as SearchMode)}
           >
             <option value="wildcard">Wildcard</option>
+            <option value="anagram">Anagram</option>
             <option value="regex">Regex</option>
             <option value="contains">Contains</option>
             <option value="prefix">Prefix</option>

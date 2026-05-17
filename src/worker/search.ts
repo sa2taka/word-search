@@ -4,9 +4,12 @@ import { REGEX_TIMEOUT_MS } from '../shared/constants';
 import { WorkerError } from './worker-error';
 import { setRegexpDeadline, clearRegexpDeadline } from './regexp-udf';
 import { normalizeWord } from '../shared/normalize';
+import { buildAnagramKey } from '../shared/anagram';
 import { initialTalkToRegex } from '../shared/initial-talk';
 import { buildNumberPatternRegex } from '../shared/number-pattern';
 import { buildVowelSearchRegex } from '../shared/vowel-search';
+
+const anagramKeySupportCache = new WeakMap<Database, boolean>();
 
 function escapeLike(query: string): string {
   return query.replace(/[%_\\]/g, '\\$&');
@@ -14,6 +17,8 @@ function escapeLike(query: string): string {
 
 function buildWhereSql(mode: SearchMode): string {
   switch (mode) {
+    case 'anagram':
+      return 'lang = ? AND anagram_key = ?';
     case 'regex':
     case 'initial':
     case 'number-pattern':
@@ -48,6 +53,8 @@ function buildWildcardPattern(query: string): string {
 function buildPattern(mode: SearchMode, query: string, lang: Lang = 'ja'): string {
   const normalized = normalizeWord(query);
   switch (mode) {
+    case 'anagram':
+      return buildAnagramKey(query);
     case 'wildcard':
       return buildWildcardPattern(query);
     case 'contains':
@@ -66,6 +73,43 @@ function buildPattern(mode: SearchMode, query: string, lang: Lang = 'ja'): strin
       return vowelRegex;
     }
   }
+}
+
+function hasAnagramKeyColumn(db: Database): boolean {
+  const cached = anagramKeySupportCache.get(db);
+  if (cached != null) {
+    return cached;
+  }
+
+  const result = db.exec('PRAGMA table_info(entries)');
+  const supported =
+    result[0]?.values.some((row) => row[1] === 'anagram_key') ?? false;
+  anagramKeySupportCache.set(db, supported);
+  return supported;
+}
+
+function executeAnagramFallback(
+  db: Database,
+  params: {
+    lang: Lang;
+    query: string;
+    limit: number;
+    offset: number;
+  },
+): { items: EntryRow[]; totalApprox?: number } {
+  const normalized = normalizeWord(params.query);
+  const charLength = [...normalized].length;
+  const key = buildAnagramKey(params.query);
+  const limit = Math.trunc(params.limit);
+  const offset = Math.trunc(params.offset);
+  const sql = `SELECT id, lang, word, pos, sources, score FROM entries WHERE lang = ? AND length(word) = ${charLength} ORDER BY score DESC, word`;
+  const matched = parseRows(db.exec(sql, [params.lang]))
+    .filter((item) => buildAnagramKey(item.word) === key);
+
+  return {
+    items: matched.slice(offset, offset + limit),
+    totalApprox: offset === 0 ? matched.length : undefined,
+  };
 }
 
 function parseRows(
@@ -96,6 +140,10 @@ export function executeSearch(
     offset: number;
   },
 ): { items: EntryRow[]; totalApprox?: number } {
+  if (params.mode === 'anagram' && !hasAnagramKeyColumn(db)) {
+    return executeAnagramFallback(db, params);
+  }
+
   const isRegexLike = params.mode === 'regex' || params.mode === 'initial' || params.mode === 'number-pattern' || params.mode === 'vowel';
 
   if (isRegexLike) {

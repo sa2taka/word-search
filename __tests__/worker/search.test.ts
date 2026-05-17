@@ -1,6 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import type { Database } from 'sql.js';
 import type { Lang } from '../../src/shared/types';
+import { buildAnagramKey } from '../../src/shared/anagram';
 import { initSqlite, openDb } from '../../src/worker/db';
 import { executeSearch } from '../../src/worker/search';
 import { WorkerError } from '../../src/worker/worker-error';
@@ -13,6 +14,30 @@ interface TestEntry {
 }
 
 async function createTestDb(entries: TestEntry[]): Promise<Database> {
+  const SQL = await initSqlite();
+  const db = openDb(SQL);
+  db.run(`
+    CREATE TABLE entries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      lang TEXT NOT NULL,
+      word TEXT NOT NULL,
+      anagram_key TEXT NOT NULL,
+      pos TEXT,
+      sources TEXT NOT NULL,
+      score INTEGER NOT NULL DEFAULT 1
+    )
+  `);
+  const stmt = db.prepare(
+    'INSERT INTO entries (lang, word, anagram_key, pos, sources) VALUES (?, ?, ?, ?, ?)',
+  );
+  for (const e of entries) {
+    stmt.run([e.lang, e.word, buildAnagramKey(e.word), e.pos ?? null, JSON.stringify(e.sources ?? ['test'])]);
+  }
+  stmt.free();
+  return db;
+}
+
+async function createLegacyTestDb(entries: TestEntry[]): Promise<Database> {
   const SQL = await initSqlite();
   const db = openDb(SQL);
   db.run(`
@@ -36,12 +61,17 @@ async function createTestDb(entries: TestEntry[]): Promise<Database> {
 }
 
 const SAMPLE_ENTRIES: TestEntry[] = [
+  { lang: 'ja', word: 'ねこ', pos: '名詞' },
+  { lang: 'ja', word: 'こね', pos: '名詞' },
+  { lang: 'ja', word: 'ねここ', pos: '名詞' },
   { lang: 'ja', word: 'たべる', pos: '動詞' },
   { lang: 'ja', word: 'たべもの', pos: '名詞' },
   { lang: 'ja', word: 'はしる', pos: '動詞' },
+  { lang: 'en', word: 'ate', pos: 'verb' },
   { lang: 'en', word: 'eat', pos: 'verb' },
   { lang: 'en', word: 'eating', pos: 'verb' },
   { lang: 'en', word: 'run', pos: 'verb' },
+  { lang: 'en', word: 'tea', pos: 'noun' },
 ];
 
 describe('executeSearch', () => {
@@ -138,6 +168,62 @@ describe('executeSearch', () => {
         expect.arrayContaining(['たべる', 'たべもの']),
       );
       expect(result.items).toHaveLength(2);
+      db.close();
+    });
+  });
+
+  describe('anagram mode', () => {
+    test('should match words made from the same English letters', async () => {
+      const db = await createTestDb(SAMPLE_ENTRIES);
+
+      const result = executeSearch(db, {
+        mode: 'anagram',
+        lang: 'en',
+        query: 'tae',
+        limit: 50,
+        offset: 0,
+      });
+
+      expect(result.items.map((i) => i.word)).toEqual(
+        expect.arrayContaining(['ate', 'eat', 'tea']),
+      );
+      expect(result.items).toHaveLength(3);
+      db.close();
+    });
+
+    test('should normalize katakana before matching Japanese anagrams', async () => {
+      const db = await createTestDb(SAMPLE_ENTRIES);
+
+      const result = executeSearch(db, {
+        mode: 'anagram',
+        lang: 'ja',
+        query: 'ネコ',
+        limit: 50,
+        offset: 0,
+      });
+
+      expect(result.items.map((i) => i.word)).toEqual(
+        expect.arrayContaining(['ねこ', 'こね']),
+      );
+      expect(result.items).toHaveLength(2);
+      db.close();
+    });
+
+    test('should fall back to word-based matching for legacy databases', async () => {
+      const db = await createLegacyTestDb(SAMPLE_ENTRIES);
+
+      const result = executeSearch(db, {
+        mode: 'anagram',
+        lang: 'en',
+        query: 'tae',
+        limit: 50,
+        offset: 0,
+      });
+
+      expect(result.items.map((i) => i.word)).toEqual(
+        expect.arrayContaining(['ate', 'eat', 'tea']),
+      );
+      expect(result.items).toHaveLength(3);
       db.close();
     });
   });

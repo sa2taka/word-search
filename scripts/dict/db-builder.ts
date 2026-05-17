@@ -1,12 +1,14 @@
 import initSqlJs from 'sql.js';
 import { createHash } from 'node:crypto';
 import type { EntryInput } from './types';
+import { buildAnagramKey } from '../../src/shared/anagram';
 
 const CREATE_TABLE_SQL = `
   CREATE TABLE entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     lang TEXT NOT NULL,
     word TEXT NOT NULL,
+    anagram_key TEXT NOT NULL,
     pos TEXT,
     sources TEXT NOT NULL,
     score INTEGER NOT NULL DEFAULT 1
@@ -15,10 +17,11 @@ const CREATE_TABLE_SQL = `
 
 const CREATE_INDEXES_SQL = [
   'CREATE INDEX idx_entries_lang_word ON entries(lang, word)',
+  'CREATE INDEX idx_entries_lang_anagram_key ON entries(lang, anagram_key, score DESC, word)',
   'CREATE INDEX idx_entries_lang_score ON entries(lang, score DESC, word)',
 ];
 
-const INSERT_SQL = 'INSERT INTO entries (lang, word, pos, sources, score) VALUES (?, ?, ?, ?, ?)';
+const INSERT_SQL = 'INSERT INTO entries (lang, word, anagram_key, pos, sources, score) VALUES (?, ?, ?, ?, ?, ?)';
 
 const BATCH_SIZE = 10_000;
 
@@ -82,7 +85,7 @@ export async function buildDatabase(
     const [lang, word] = key.split('\t');
     const sourcesJson = JSON.stringify([...value.sources].sort());
     const score = scores?.get(key) ?? 1;
-    stmt.run([lang!, word!, value.pos ?? null, sourcesJson, score]);
+    stmt.run([lang!, word!, buildAnagramKey(word!), value.pos ?? null, sourcesJson, score]);
     count++;
 
     if (count % BATCH_SIZE === 0) {

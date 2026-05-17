@@ -61,4 +61,10 @@ describe('SearchPanel', () => {
 
     expect(screen.getByLabelText(/mode/i)).toHaveValue('prefix');
   });
+
+  test('when mode is anagram, should show sorted hint', () => {
+    render(<SearchPanel {...defaultProps} mode="anagram" query="tac" />);
+
+    expect(screen.getByText('act')).toBeInTheDocument();
+  });
 });

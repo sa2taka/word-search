@@ -99,7 +99,7 @@ async function main() {
     sha256,
     bytes: dbBinary.byteLength,
     created_at: new Date().toISOString(),
-    schema: 1,
+    schema: 2,
     sources: ALL_SOURCES.map((s) => s.sourceInfo),
   };
 

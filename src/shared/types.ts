@@ -1,4 +1,4 @@
-export type SearchMode = 'wildcard' | 'contains' | 'prefix' | 'regex' | 'initial' | 'number-pattern' | 'vowel';
+export type SearchMode = 'wildcard' | 'anagram' | 'contains' | 'prefix' | 'regex' | 'initial' | 'number-pattern' | 'vowel';
 export type DbStatus = 'idle' | 'downloading' | 'ready' | 'error' | 'updatable';
 export type Lang = 'ja' | 'en';
 

@@ -44,6 +44,7 @@ const jaBaseWords: TestEntry[] = [
 ];
 
 const enBaseWords: TestEntry[] = [
+  { lang: 'en', word: 'act', pos: 'verb' },
   { lang: 'en', word: 'cat', pos: 'noun' },
   { lang: 'en', word: 'dog', pos: 'noun' },
   { lang: 'en', word: 'tokyo', pos: 'noun' },
@@ -103,7 +104,7 @@ export const TEST_META = {
   sha256: '',
   bytes: 0,
   created_at: '2025-01-01T00:00:00Z',
-  schema: 1,
+  schema: 2,
   sources: [
     {
       name: 'Test Dictionary',

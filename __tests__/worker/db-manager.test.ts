@@ -46,7 +46,7 @@ const SAMPLE_META: DictMeta = {
   sha256: 'abc123',
   bytes: 1024,
   created_at: '2026-01-01',
-  schema: 1,
+  schema: 2,
   sources: [],
 };
 

@@ -54,6 +54,16 @@ test.describe('Search functionality', () => {
     }
   });
 
+  test('when searching in anagram mode, should return only exact anagrams', async ({ page }) => {
+    await page.locator('#search-mode').selectOption('anagram');
+    await page.locator('#search-lang').selectOption('en');
+    await page.locator('[aria-label="Search"]').fill('tac');
+
+    const results = page.locator('.result-list__word');
+    await expect(results).toHaveCount(2);
+    await expect(results).toHaveText(['act', 'cat']);
+  });
+
   test('when switching language from ja to en, should show different results', async ({
     page,
   }) => {

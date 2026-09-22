@@ -13,7 +13,7 @@ export type HandlerMap = {
 };
 
 function extractRequestId(request: WorkerRequest): string | undefined {
-  if (request.type === 'SEARCH' || request.type === 'CANCEL' || request.type === 'WORD_SPLIT' || request.type === 'CROSS_SEARCH') {
+  if (request.type === 'SEARCH' || request.type === 'CANCEL' || request.type === 'WORD_SPLIT' || request.type === 'CROSS_SEARCH' || request.type === 'CAESAR_SEARCH') {
     return request.requestId;
   }
   return undefined;

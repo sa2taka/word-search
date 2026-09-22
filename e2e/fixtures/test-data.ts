@@ -41,6 +41,9 @@ const jaBaseWords: TestEntry[] = [
   { lang: 'ja', word: 'さかな', pos: '名詞', score: 9 },   // さ(a)か(a)な(a) = 'aaa'
   // 母音検索用: au パターン (なつ は既存)
   { lang: 'ja', word: 'はる', pos: '名詞', score: 9 },     // は(a)る(u) = 'au'
+  // ずらし検索用 (けいゆ を +3 → しおり)
+  { lang: 'ja', word: 'けいゆ', pos: '名詞', score: 6 },
+  { lang: 'ja', word: 'しおり', pos: '名詞', score: 6 },
 ];
 
 const enBaseWords: TestEntry[] = [

@@ -15,6 +15,7 @@ function createStubHandlers(
     RESET_DB: vi.fn(),
     WORD_SPLIT: vi.fn(),
     CROSS_SEARCH: vi.fn(),
+    CAESAR_SEARCH: vi.fn(),
     ...overrides,
   };
 }

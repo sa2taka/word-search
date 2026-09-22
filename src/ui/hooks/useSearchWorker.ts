@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
+  CaesarMatch,
   DbStatus,
   EntryPair,
   EntryRow,
@@ -33,6 +34,7 @@ interface UseSearchWorkerReturn {
   totalApprox: number;
   wordSplitPairs: EntryPair[];
   crossSearchPairs: EntryPair[];
+  caesarMatches: CaesarMatch[];
   error: WorkerError | null;
   searching: boolean;
   retry: () => void;
@@ -40,6 +42,7 @@ interface UseSearchWorkerReturn {
   cancel: () => void;
   wordSplit: (params: { lang: Lang; query: string; limit: number }) => void;
   crossSearch: (params: { lang: Lang; query1: string; query2: string; limit: number }) => void;
+  caesarSearch: (params: { lang: Lang; query: string; limit: number }) => void;
   checkUpdate: (metaUrl: string) => void;
   updateDb: (metaUrl: string) => void;
   resetDb: () => void;
@@ -58,6 +61,7 @@ export function useSearchWorker(metaUrl: string): UseSearchWorkerReturn {
   const [totalApprox, setTotalApprox] = useState(0);
   const [wordSplitPairs, setWordSplitPairs] = useState<EntryPair[]>([]);
   const [crossSearchPairs, setCrossSearchPairs] = useState<EntryPair[]>([]);
+  const [caesarMatches, setCaesarMatches] = useState<CaesarMatch[]>([]);
   const [error, setError] = useState<WorkerError | null>(null);
   const [searching, setSearching] = useState(false);
 
@@ -113,6 +117,12 @@ export function useSearchWorker(metaUrl: string): UseSearchWorkerReturn {
         case 'CROSS_SEARCH_RESULT':
           if (data.requestId === requestIdRef.current) {
             setCrossSearchPairs(data.pairs);
+            setSearching(false);
+          }
+          break;
+        case 'CAESAR_SEARCH_RESULT':
+          if (data.requestId === requestIdRef.current) {
+            setCaesarMatches(data.matches);
             setSearching(false);
           }
           break;
@@ -175,6 +185,19 @@ export function useSearchWorker(metaUrl: string): UseSearchWorkerReturn {
     [post],
   );
 
+  const caesarSearch = useCallback(
+    (params: { lang: Lang; query: string; limit: number }) => {
+      const requestId = crypto.randomUUID();
+      requestIdRef.current = requestId;
+      setSearching(true);
+      setItems([]);
+      setWordSplitPairs([]);
+      setCrossSearchPairs([]);
+      post({ type: 'CAESAR_SEARCH', ...params, requestId });
+    },
+    [post],
+  );
+
   const cancel = useCallback(() => {
     if (requestIdRef.current) {
       post({ type: 'CANCEL', requestId: requestIdRef.current });
@@ -208,6 +231,7 @@ export function useSearchWorker(metaUrl: string): UseSearchWorkerReturn {
     totalApprox,
     wordSplitPairs,
     crossSearchPairs,
+    caesarMatches,
     sources,
     error,
     searching,
@@ -216,6 +240,7 @@ export function useSearchWorker(metaUrl: string): UseSearchWorkerReturn {
     cancel,
     wordSplit,
     crossSearch,
+    caesarSearch,
     checkUpdate,
     updateDb,
     resetDb,

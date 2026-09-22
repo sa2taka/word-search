@@ -59,9 +59,22 @@ export type WorkerRequest =
       query2: string;
       limit: number;
       requestId: string;
+    }
+  | {
+      type: 'CAESAR_SEARCH';
+      lang: Lang;
+      query: string;
+      limit: number;
+      requestId: string;
     };
 
 export type EntryPair = [EntryRow, EntryRow];
+
+/** ずらし検索の1件。shift は正で五十音順の後ろ、負で前にずらしたことを表す。 */
+export interface CaesarMatch {
+  shift: number;
+  entry: EntryRow;
+}
 
 export type WorkerResponse =
   | {
@@ -87,6 +100,11 @@ export type WorkerResponse =
       type: 'CROSS_SEARCH_RESULT';
       requestId: string;
       pairs: EntryPair[];
+    }
+  | {
+      type: 'CAESAR_SEARCH_RESULT';
+      requestId: string;
+      matches: CaesarMatch[];
     }
   | {
       type: 'ERROR';

@@ -8,11 +8,12 @@ import { LicensePage } from './components/LicensePage';
 import { Footer } from './components/Footer';
 import { WordSplitPanel } from './components/WordSplitPanel';
 import { CrossSearchPanel } from './components/CrossSearchPanel';
+import { CaesarSearchPanel } from './components/CaesarSearchPanel';
 import { useSearchWorker } from './hooks/useSearchWorker';
 import { META_URL, DEFAULT_PAGE_SIZE } from '../shared/constants';
 import type { SearchMode, Lang } from '../shared/types';
 
-type Page = 'search' | 'word-split' | 'cross-search' | 'license';
+type Page = 'search' | 'word-split' | 'cross-search' | 'caesar-search' | 'license';
 
 function statusMessage(status: string, progress?: number, errorMessage?: string): string {
   switch (status) {
@@ -43,8 +44,10 @@ export function App() {
   const [crossQuery1, setCrossQuery1] = useState('');
   const [crossQuery2, setCrossQuery2] = useState('');
   const [crossLang, setCrossLang] = useState<Lang>('ja');
+  const [caesarQuery, setCaesarQuery] = useState('');
+  const [caesarLang, setCaesarLang] = useState<Lang>('ja');
 
-  const { search, resetDb, retry, dbStatus, version, progress, sources, items, totalApprox, error, searching, wordSplitPairs, wordSplit, crossSearchPairs, crossSearch } = worker;
+  const { search, resetDb, retry, dbStatus, version, progress, sources, items, totalApprox, error, searching, wordSplitPairs, wordSplit, crossSearchPairs, crossSearch, caesarMatches, caesarSearch } = worker;
 
   useEffect(() => {
     if (dbStatus !== 'ready' || query.trim() === '') return;
@@ -85,6 +88,11 @@ export function App() {
     crossSearch({ lang: crossLang, query1: crossQuery1.trim(), query2: crossQuery2.trim(), limit: DEFAULT_PAGE_SIZE });
   }, [dbStatus, crossQuery1, crossQuery2, crossLang, crossSearch]);
 
+  const handleCaesarSearch = useCallback(() => {
+    if (dbStatus !== 'ready' || caesarQuery.trim() === '') return;
+    caesarSearch({ lang: caesarLang, query: caesarQuery.trim(), limit: DEFAULT_PAGE_SIZE });
+  }, [dbStatus, caesarQuery, caesarLang, caesarSearch]);
+
   if (page === 'license') {
     return (
       <>
@@ -121,6 +129,13 @@ export function App() {
           data-testid="tab-cross-search"
         >
           クロス検索
+        </button>
+        <button
+          className={`app-tabs__btn${page === 'caesar-search' ? ' app-tabs__btn--active' : ''}`}
+          onClick={() => setPage('caesar-search')}
+          data-testid="tab-caesar-search"
+        >
+          ずらし検索
         </button>
       </nav>
       {showError && error && (
@@ -180,6 +195,17 @@ export function App() {
           onQuery2Change={setCrossQuery2}
           onLangChange={setCrossLang}
           onSearch={handleCrossSearch}
+        />
+      )}
+      {page === 'caesar-search' && (
+        <CaesarSearchPanel
+          lang={caesarLang}
+          query={caesarQuery}
+          matches={caesarMatches}
+          searching={searching}
+          onQueryChange={setCaesarQuery}
+          onLangChange={setCaesarLang}
+          onSearch={handleCaesarSearch}
         />
       )}
       <Footer onNavigateToLicense={() => setPage('license')} onResetStorage={handleReset} />

@@ -6,6 +6,7 @@ import { OpfsStorage } from './opfs-storage';
 import { executeSearch } from './search';
 import { executeWordSplit } from './word-split';
 import { executeCrossSearch } from './cross-search';
+import { executeCaesarSearch } from './caesar-search';
 import { WorkerError } from './worker-error';
 
 const cancelledRequests = new Set<string>();
@@ -161,6 +162,34 @@ const dispatch = createDispatcher(
         type: 'CROSS_SEARCH_RESULT',
         requestId: req.requestId,
         pairs: result.pairs,
+      });
+    },
+    CAESAR_SEARCH: async (req, post) => {
+      if (cancelledRequests.has(req.requestId)) {
+        cancelledRequests.delete(req.requestId);
+        return;
+      }
+
+      const db = manager.getDb();
+      if (!db) {
+        throw new WorkerError('DB_OPEN_FAILED', 'Database is not initialized');
+      }
+
+      const result = executeCaesarSearch(db, {
+        lang: req.lang,
+        query: req.query,
+        limit: req.limit,
+      });
+
+      if (cancelledRequests.has(req.requestId)) {
+        cancelledRequests.delete(req.requestId);
+        return;
+      }
+
+      post({
+        type: 'CAESAR_SEARCH_RESULT',
+        requestId: req.requestId,
+        matches: result.matches,
       });
     },
     CHECK_UPDATE: async (req, post) => {

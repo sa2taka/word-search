@@ -10,9 +10,9 @@ UI (React) と検索エンジン (Web Worker + sql.js) が `postMessage` で通�
 ```bash
 npm run dev          # 開発サーバー (port 5173)
 npm run build        # プロダクションビルド
-npm run test         # ユニットテスト (Vitest, 88件)
+npm run test         # ユニットテスト (Vitest, 226件)
 npm run test:watch   # ユニットテスト watch
-npm run e2e          # E2Eテスト (Playwright Chromium, 20件)
+npm run e2e          # E2Eテスト (Playwright Chromium, 64件)
 npm run e2e:headed   # E2E ブラウザ表示
 npm run lint         # ESLint
 ```
@@ -51,6 +51,11 @@ public/           静的ファイル（sql-wasm.wasm, _headers）
 正規化済み `word` カラムを検索。バインドパラメータは `[lang, pattern]` の 2 つ。
 
 モード: `wildcard` (デフォルト, ? → LIKE _), `contains` (部分一致), `prefix` (前方一致), `regex` (正規表現 UDF, 2秒タイムアウト)
+
+### ずらし検索 (CAESAR_SEARCH)
+
+五十音46文字 (英語は a-z) を循環させて n 文字ずらすと別の単語になる組み合わせを検索する。
+同じ長さの単語を候補として取得し、`src/shared/caesar.ts` で1文字ずつのずらし量が一定かを判定する。濁点・半濁点は清音に落として比較する。
 
 ## 重要な技術的制約
 
